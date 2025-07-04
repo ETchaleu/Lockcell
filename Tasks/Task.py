@@ -11,34 +11,34 @@ from typing import List, Tuple
 from . import TaskEnv
 
 
-@task(require_context=True)
-def nTask(ctx, delta : list, n : int):
+@task
+def nTask(delta : list, n : int):
 
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}TASK : ".format(n) + delta.__str__()
     if TaskEnv.Test(delta): # Test le delta passé en param
-        ctx.logger.info(id + " pass") 
         return None, True
     
     # Si le test fail
 
     # Si |Delta| = 1 on a fini
     if len(delta) == 1:
-        ctx.logger.info(id + " 1 sized") 
         return [delta], False
     
 
     #Sinon on split en n (= granularity)
     subdiv = TaskEnv.split(delta, n)
-    ctx.logger.info(id + " Sub") 
     subdivArg = [(delta, 2) for delta in subdiv] #Mise en forme pour le passage en paramètre
 
     result = nTask.map_invoke(subdivArg) #type: ignore
 
     return nAGG.invoke(subdiv, result, n, delegate = True)#type: ignore
 
-@task(require_context=True)
-def nAGG(ctx, subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int):
+#########################################################################################################
+#########################################################################################################
+
+@task
+def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int):
 
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}AGG : ".format(n) + subdiv.__str__()
@@ -57,7 +57,6 @@ def nAGG(ctx, subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
         for answer in answers:
             if answer[0] != None:
                 rep.extend(answer[0])
-        ctx.logger.info(id + " chill fail") 
         return rep, False
     
 
@@ -78,7 +77,6 @@ def nAGG(ctx, subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
         result = nTask.map_invoke(newdivisionArg)#type: ignore
 
         k = min(2*n, len(omega))
-        ctx.logger.info(id + " n = 2, granu up") 
         return nAGG.invoke(newdivision, result, k, delegate = True)#type: ignore
     
     #Sinon on teste les complémentaires
@@ -87,11 +85,14 @@ def nAGG(ctx, subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
     k = max(2, n-1)
     nablas = [(TaskEnv.listminus(omega, delta), k) for delta in subdiv]
     result = nTask.map_invoke(nablas)#type: ignore
-    ctx.logger.info(id + " Test compl") 
     return nAGG2.invoke(subdiv, result, n, delegate = True)#type: ignore
 
-@task(require_context=True)
-def nAGG2(ctx, subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int):
+
+#########################################################################################################
+#########################################################################################################
+
+@task
+def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int):
 
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}AGG2 : ".format(n) + subdiv.__str__()
@@ -108,7 +109,6 @@ def nAGG2(ctx, subdiv : list, answers : List[Tuple[List[list] | None, bool]], n 
         for answer in answers:
             if answer[0] != None:
                 rep.extend(answer[0])
-        ctx.logger.info(id + " Chill fail") 
         return rep, False
 
     # Sinon on augmente la granularité
@@ -129,5 +129,4 @@ def nAGG2(ctx, subdiv : list, answers : List[Tuple[List[list] | None, bool]], n 
     result = nTask.map_invoke(newdivisionArg)#type: ignore
 
     k = min(2*n, len(omega))
-    ctx.logger.info(id + " Granu Up") 
     return nAGG.invoke(newdivision, result, k, delegate = True) # type: ignore
