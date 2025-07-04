@@ -1,19 +1,61 @@
 from pymonik import Pymonik, task
-import numpy as np
+
 from Tasks import nTask, TaskEnv
+import copy
 
 import cloudpickle # Install cloudpickle
 cloudpickle.register_pickle_by_value(TaskEnv) # Pour les modules de ton code tu fait du sort que ca soit pickler par value
 
+class TestConfig(TaskEnv.Config):
+    def __init__(self, *args):
+        self.Pb = []
+        if args:
+            self.Pb = copy.deepcopy(args[0])
+        super().__init__()
+    
+    def GenProb(self, N :int, *args):
+        import numpy as np
+        if args:
+            for (cle, nbr) in args:
+                try:
+                    cle_int = int(cle)
+                    if cle_int <=0:
+                        raise ValueError("Génération du problem set impossible, la taille de l'ensemble passée est négative")
+                    self.Pb.append(np.random.randint(0, N, size = nbr))
+                except ValueError as e:
+                    raise ValueError("Erreur lors de la génération du problem set : conversion en entier | " + str(e))
+        else:
+            raise ValueError("Erreur lors de la génération du problem set : veuillez donner une taille d'ensemble minimaux au format \"taille de l'ensemble\" : nombre")
+        
+    
+    
+    def Test(self, subspace):
+        for test in self.Pb:
+            if TestConfig.In(subspace, test):
+                return False
+        return True
+    
+    @staticmethod
+    def In(tab : list, test : list):
+        res = True
+        for i in test:
+            if not (i in tab):
+                res = False
+                break
+        return res
+
+
+            
+
 N = 2**10
 searchspace = [i for i in range(N)]
 
-def dd_min(searchspace :list):
-    return nTask.invoke(searchspace, 2).wait().get() # type: ignore
+def dd_min(searchspace :list, config : TaskEnv.Config):
+    return nTask.invoke(searchspace, 2, config).wait().get() # type: ignore
 
-def RDDMIN(searchspace : list, func, finalfunc):
+def RDDMIN(searchspace : list, func, finalfunc, config):
     with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
-        result = dd_min(searchspace) 
+        result = dd_min(searchspace, config) 
         i = 1
         tot = []
         while result[1] == False:

@@ -21,5 +21,6 @@ def say(res, i):
 def finalSay(res, i):
     print("\n" + "-"*80 +"\n" + "-"*80  + "\n" + "Recursions : " + i.__str__() + " | Total results : " + res.__str__()  +"\n" + "-"*80  +"\n" + "-"*80, end ="\n\n")
 
+config = controllers.TestConfig([[1, 3], [2], [5], [291], [389]])
 
-controllers.RDDMIN(searchspace, say, finalSay)
+controllers.RDDMIN(searchspace, say, finalSay, config)
