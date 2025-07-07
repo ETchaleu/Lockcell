@@ -1,16 +1,19 @@
-# -*- coding: utf-8 -*-
 """
-Created on Thu Jun 26 11:02:38 2025
+Created on : 2025-07-07
+Author   : Erwan Tchaleu
+Email    : erwan.tchale@gmail.com
 
-@author: etchaleungankeu
 """
+
 
 from abc import ABC, abstractmethod
 
 
 class Config(ABC):
-    def __init__(self):
+    def __init__(self, nbRun = None):
         self.nbRun = 1
+        if nbRun != None:
+            self.nbRun = nbRun
         pass
     
     @abstractmethod
@@ -19,6 +22,14 @@ class Config(ABC):
 
     def setNbRun(self, nbRun):
         self.nbRun = nbRun
+        return self
+    
+    @abstractmethod
+    def copy(self) -> "Config":
+        pass
+
+    
+    
         
 
 verb = False
