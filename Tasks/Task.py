@@ -135,5 +135,5 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
         else :
             newdivisionArg.append((delta, 2, config))
             newdivision.append(delta)
-            
+    result = nTask.map_invoke(newdivisionArg)#type: ignore
     return nAGG.invoke(newdivision, result, k, config, delegate = True) # type: ignore
