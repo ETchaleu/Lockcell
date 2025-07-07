@@ -40,6 +40,7 @@ def nTask(delta : list, n : int, config :TaskEnv.Config):
 @task
 def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config :TaskEnv.Config):
 
+
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}AGG : ".format(n) + subdiv.__str__()
      

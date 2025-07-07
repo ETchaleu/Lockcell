@@ -15,11 +15,8 @@ class Config(ABC):
     @abstractmethod
     def Test(self, subspace) -> bool:
         pass
-        
 
 verb = False
-
-
 
 def Validate(tab : list):
     dic = {}
