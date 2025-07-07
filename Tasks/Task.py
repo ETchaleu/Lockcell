@@ -1,9 +1,10 @@
-# -*- coding: utf-8 -*-
 """
-Created on Mon Jun 30 14:18:03 2025
+Created on : 2025-07-07
+Author   : Erwan Tchaleu
+Email    : erwan.tchale@gmail.com
 
-@author: etchaleungankeu
 """
+
 from pymonik import task
 
 import numpy as np
@@ -23,7 +24,7 @@ def nTask(delta : list, n : int, config :TaskEnv.Config):
 
     # Si |Delta| = 1 on a fini
     if len(delta) == 1:
-        return [delta], False
+        return [delta], False, config
     
 
     #Sinon on split en n (= granularity)
@@ -57,13 +58,13 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
         for answer in answers:
             if answer[0] != None:
                 rep.extend(answer[0])
-        return rep, False
+        return rep, False, config
     
 
     if n == 2: # Si la granularité vaut 2, on ne test pas les complémentaires et on augmente directement la granularité
         omega = sum(subdiv, [])
         if len(omega) <= n:
-            return [omega], False
+            return [omega], False, config
         
         newdivision = [] # Pour le 2nAGG
         newdivisionArg = [] # Pour les nTask
@@ -112,13 +113,13 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
         for answer in answers:
             if answer[0] != None:
                 rep.extend(answer[0])
-        return rep, False
+        return rep, False, config
 
     # Sinon on augmente la granularité
 
     omega = sum(subdiv, [])
     if len(omega) <= n: # Si granularité max on retourne le delta courant (omega)
-        return [omega], False
+        return [omega], False, config
     
     newdivision = [] # Pour le 2nAGG
     newdivisionArg = [] # Pour les nTask
