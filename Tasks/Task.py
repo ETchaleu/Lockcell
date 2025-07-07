@@ -18,7 +18,7 @@ def nTask(delta : list, n : int, config :TaskEnv.Config):
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}TASK : ".format(n) + delta.__str__()
     if config.Test(delta): # Test le delta passé en param
-        return None, True
+        return None, True, config
     
     # Si le test fail
 
