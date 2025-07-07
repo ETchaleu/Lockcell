@@ -20,15 +20,14 @@ class TestConfig(TaskEnv.Config):
         super().__init__()
     
     def GenProb(self, N :int, *args):
-        import numpy as np
         if args:
-            for (cle, nbr) in args:
+            for (nbr, cle, ET) in args:
                 try:
                     cle_int = int(cle)
                     if cle_int <=0:
                         raise ValueError("Génération du problem set impossible, la taille de l'ensemble passée est négative")
                     for _ in range(nbr):
-                        self.Pb.append(np.random.randint(0, N, size = cle_int).tolist())
+                        self.Pb.append(GenCloseSet(N, cle_int, ET))
                 except ValueError as e:
                     raise ValueError("Erreur lors de la génération du problem set : conversion en entier | " + str(e))
         else:
@@ -56,8 +55,24 @@ class TestConfig(TaskEnv.Config):
         return newCopy
 
 
-            
-
+def GenCloseSet(N : int, size : int, ET):
+    import numpy as np
+    center = np.random.randint(0, N)
+    val = [center]
+    for _ in range(1, size):
+        step = round(np.random.normal(loc = 0, scale = ET))
+        center += step
+        i = 1
+        while center in val:
+            up = center + i
+            down = center - i
+            if up not in val:
+                center = up
+            elif down not in val:
+                center = down
+            i += 1
+        val.append(center)
+    return val
 N = 2**10
 searchspace = [i for i in range(N)]
 
@@ -86,6 +101,7 @@ def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config):
             all = sum(result[0], [])
             searchspace = TaskEnv.listminus(searchspace, all)
             result = dd_min(searchspace, config).wait().get()
+            i += 1
         if finalfunc != None:
             finalfunc(tot, i)
         return tot, i
