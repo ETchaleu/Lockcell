@@ -27,7 +27,8 @@ def say(res, i):
 def finalSay(res, i):
     print("\n" + "-"*80 +"\n" + "-"*80  + "\n" + "Recursions : " + i.__str__() + " | Total results : " + res.__str__()  +"\n" + "-"*80  +"\n" + "-"*80, end ="\n\n")
 
-config = controllers.TestConfig([[4, 5, 6]])
+config = controllers.TestConfig()
+config.GenProb(N, (10, 1, 0), (5, 2, 2), (3, 3, 2))
 nbRunTab = [1]
 print(config.Pb)
 input("press to continue...")

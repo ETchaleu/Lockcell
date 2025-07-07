@@ -93,6 +93,7 @@ def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config):
             all = sum(result[0], [])
             searchspace = TaskEnv.listminus(searchspace, all)
             result = dd_min(searchspace, config).wait().get()
+            i += 1
         if finalfunc != None:
             finalfunc(tot, i)
 
