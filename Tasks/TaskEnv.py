@@ -20,21 +20,6 @@ class Config(ABC):
 verb = False
 
 
-
-def Validate(tab : list):
-    dic = {}
-    for i in Pb:
-        dic[i.__str__()] = 0
-    for i in tab:
-        if not i.__str__() in dic:
-            return False
-        dic[i.__str__()] +=1
-    for a in dic:
-        if dic[a] != 1:
-            return False
-    return True
-
-
 def verbose(tab : list, end =None): # type: ignore
     if end == None:
         end = ""
