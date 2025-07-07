@@ -6,7 +6,7 @@ cloudpickle.register_pickle_by_value(TaskEnv) # Pour les modules de ton code tu 
 cloudpickle.register_pickle_by_value(controllers) # Pour les modules de ton code tu fait du sort que ca soit pickler par value
 
 
-N = 2**3
+N = 2**4
 searchspace = [i for i in range(N)]
 
 def counter(n : int):
@@ -27,6 +27,8 @@ def say(res, i):
 def finalSay(res, i):
     print("\n" + "-"*80 +"\n" + "-"*80  + "\n" + "Recursions : " + i.__str__() + " | Total results : " + res.__str__()  +"\n" + "-"*80  +"\n" + "-"*80, end ="\n\n")
 
-config = controllers.TestConfig([[1, 3], [0]])
-
+config = controllers.TestConfig([[4, 5, 6]])
+nbRunTab = [1]
+print(config.Pb)
+input("press to continue...")
 controllers.RDDMIN(searchspace, say, finalSay, config)

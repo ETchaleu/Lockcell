@@ -123,13 +123,17 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
     newdivision = [] # Pour le 2nAGG
     newdivisionArg = [] # Pour les nTask
 
+    k = min(2*n, len(omega))
     for delta in subdiv: # Mise en forme des lis
-        temp = TaskEnv.split(delta, 2)
-        newdivisionArg.append((temp[0], 2, config))
-        newdivisionArg.append((temp[1], 2, config))
-        newdivision.append(temp[0])
-        newdivision.append(temp[1])
+        if len(delta) >= 2:
+            temp = TaskEnv.split(delta, 2)
+            newdivisionArg.append((temp[0], 2, config))
+            newdivisionArg.append((temp[1], 2, config))
+            newdivision.append(temp[0])
+            newdivision.append(temp[1])
+        else :
+            newdivisionArg.append((delta, 2, config))
+            newdivision.append(delta)
     result = nTask.map_invoke(newdivisionArg)#type: ignore
 
-    k = min(2*n, len(omega))
     return nAGG.invoke(newdivision, result, k, config, delegate = True) # type: ignore
