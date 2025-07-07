@@ -27,7 +27,8 @@ class TestConfig(TaskEnv.Config):
                     cle_int = int(cle)
                     if cle_int <=0:
                         raise ValueError("Génération du problem set impossible, la taille de l'ensemble passée est négative")
-                    self.Pb.append(np.random.randint(0, N, size = nbr))
+                    for _ in range(nbr):
+                        self.Pb.append(np.random.randint(0, N, size = cle_int).tolist())
                 except ValueError as e:
                     raise ValueError("Erreur lors de la génération du problem set : conversion en entier | " + str(e))
         else:
