@@ -32,7 +32,7 @@ def nTask(delta : list, n : int, config :TaskEnv.Config):
 
     result = nTask.map_invoke(subdivArg) #type: ignore
 
-    return nAGG.invoke(subdiv, result, n, delegate = True)#type: ignore
+    return nAGG.invoke(subdiv, result, n, config, delegate = True)#type: ignore
 
 #########################################################################################################
 #########################################################################################################

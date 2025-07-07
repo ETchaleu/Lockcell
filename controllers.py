@@ -3,9 +3,6 @@ from pymonik import Pymonik, task
 from Tasks import nTask, TaskEnv
 import copy
 
-import cloudpickle # Install cloudpickle
-cloudpickle.register_pickle_by_value(TaskEnv) # Pour les modules de ton code tu fait du sort que ca soit pickler par value
-
 class TestConfig(TaskEnv.Config):
     def __init__(self, *args):
         self.Pb = []
@@ -70,6 +67,6 @@ def RDDMIN(searchspace : list, func, finalfunc, config):
             tot.extend(res)
             all = sum(result[0], [])
             searchspace = TaskEnv.listminus(searchspace, all)
-            result = dd_min(searchspace)
+            result = dd_min(searchspace, config)
         finalfunc(tot, i)
 
