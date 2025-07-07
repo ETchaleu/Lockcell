@@ -1,3 +1,11 @@
+"""
+Created on : 2025-07-07
+Author   : Erwan Tchaleu
+Email    : erwan.tchale@gmail.com
+
+"""
+
+
 from pymonik import Pymonik, task
 
 from Tasks import nTask, TaskEnv
@@ -6,9 +14,7 @@ import copy
 class TestConfig(TaskEnv.Config):
     def __init__(self, *args, nbRun = None):
         self.Pb = []
-        self.nbRun = 1
-        if nbRun != None:
-            self.nbRun = nbRun
+        super().__init__(nbRun)
         if args:
             self.Pb = copy.deepcopy(args[0])
         super().__init__()
@@ -43,6 +49,10 @@ class TestConfig(TaskEnv.Config):
                 res = False
                 break
         return res
+    
+    def copy(self):
+        newCopy = TestConfig(self.Pb, self.nbRun)
+        return newCopy
 
 
             
@@ -77,4 +87,60 @@ def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config):
             result = dd_min(searchspace, config).wait().get()
         if finalfunc != None:
             finalfunc(tot, i)
+        return tot, i
+
+def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config):
+    #TODO: Preprocessing of nbRunTab
+
+    findback = {}
+    i = 0
+    tot = []
+    for run in nbRunTab:
+        findback[run] = i
+        i += 1
+    with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
+        firstFail = False
+        for run in nbRunTab:
+            config.setNbRun(run)
+            result = dd_min(searchspace, config).wait().get()
+            if result[1] == True:
+                continue
+            firstFail = True
+            config.setNbRun(run)
+            done = False
+            Args = [(res[0], 2, config) for res in result[0]]
+            storeResult = nTask.map_invoke(Args).wait().get() 
+            
+            #TODO: Quand l'implem de la disponibilité au plus tot sera prête faudra adapter
+            while not done:
+                ready = [i for i in range(len(storeResult))]
+                notReady = TaskEnv.listminus([i for i in range(storeResult)], ready)
+                nextArgs = []
+                waiting = [storeResult[idx] for idx in notReady]
+                didit = [storeResult[idx] for idx in ready]
+
+                #préparation des configuration pour les tâches suivantes,
+                for res in didit:
+                    where = findback[res[2].nbRun]
+                    if where >= len(nbRunTab): #Si on a déjà atteint le nombre de run max, on ajoute la sortie à tot et on réduit le search space
+                        tot.extend(res[0])
+                        all = sum(res[0], [])
+                        found(res[0])
+                        searchspace = TaskEnv.listminus(searchspace, all)
+                        continue
+
+                    nextrun = nbRunTab[where+1] # Sinon on trouve le nombre de run suivant et on prépare le lancement des tâches filles
+                    for sub in res[0]:
+                        newconf = config.copy()
+                        newconf.setNbRun(nextrun)
+                        nextArgs.append((sub, 2, newconf))
+                if nextArgs != []:
+                    storeResult = waiting.extend(nTask.map_invoke(nextArgs))
+                else:
+                    if waiting == []:
+                        done = True
+        if firstFail:    
+            return tot
+        raise RuntimeError(f"SRDDMin : testing the subset {nbRunTab[-1]} times has never returned false")
+
 
