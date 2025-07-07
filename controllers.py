@@ -4,8 +4,11 @@ from Tasks import nTask, TaskEnv
 import copy
 
 class TestConfig(TaskEnv.Config):
-    def __init__(self, *args):
+    def __init__(self, *args, nbRun = None):
         self.Pb = []
+        self.nbRun = 1
+        if nbRun != None:
+            self.nbRun = nbRun
         if args:
             self.Pb = copy.deepcopy(args[0])
         super().__init__()
@@ -48,25 +51,30 @@ N = 2**10
 searchspace = [i for i in range(N)]
 
 def dd_min(searchspace :list, config : TaskEnv.Config):
-    return nTask.invoke(searchspace, 2, config).wait().get() # type: ignore
+    return nTask.invoke(searchspace, 2, config) # type: ignore
 
-def RDDMIN(searchspace : list, func, finalfunc, config):
+def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config):
     with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
-        result = dd_min(searchspace, config) 
+        result = dd_min(searchspace, config).wait().get() 
         i = 1
         tot = []
         while result[1] == False:
-            print(result)
+            # On retire les doublons
             dic = {}
             res = []
             for key in result[0]:
                 if not (key.__str__() in dic):
                     res.append(key)
                     dic[key.__str__()] = True
-            func(res, i)
+            # On transmet
+            if func != None:
+                func(res, i)
+            
+            #Ajout au total + réduction du searchspace, puis on relance un dd_min
             tot.extend(res)
             all = sum(result[0], [])
             searchspace = TaskEnv.listminus(searchspace, all)
-            result = dd_min(searchspace, config)
-        finalfunc(tot, i)
+            result = dd_min(searchspace, config).wait().get()
+        if finalfunc != None:
+            finalfunc(tot, i)
 

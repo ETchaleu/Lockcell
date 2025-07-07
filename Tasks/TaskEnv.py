@@ -10,11 +10,15 @@ from abc import ABC, abstractmethod
 
 class Config(ABC):
     def __init__(self):
+        self.nbRun = 1
         pass
     
     @abstractmethod
     def Test(self, subspace) -> bool:
         pass
+
+    def setNbRun(self, nbRun):
+        self.nbRun = nbRun
         
 
 verb = False
