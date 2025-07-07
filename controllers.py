@@ -19,7 +19,7 @@ class TestConfig(TaskEnv.Config):
             self.Pb = copy.deepcopy(args[0])
         super().__init__()
     
-    def GenProb(self, N :int, *args):
+    def GenProb(self, N :int, *args): # TODO: faire en sorte que les ensembles ne se surperposent pas
         if args:
             for (nbr, cle, ET) in args:
                 try:
@@ -125,13 +125,13 @@ def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config)
             firstFail = True
             config.setNbRun(run)
             done = False
-            Args = [(res[0], 2, config) for res in result[0]]
+            Args = [(res, 2, config) for res in result[0]]
             storeResult = nTask.map_invoke(Args).wait().get() 
             
             #TODO: Quand l'implem de la disponibilité au plus tot sera prête faudra adapter
             while not done:
                 ready = [i for i in range(len(storeResult))]
-                notReady = TaskEnv.listminus([i for i in range(storeResult)], ready)
+                notReady = TaskEnv.listminus([i for i in range(len(storeResult))], ready)
                 nextArgs = []
                 waiting = [storeResult[idx] for idx in notReady]
                 didit = [storeResult[idx] for idx in ready]
@@ -139,7 +139,7 @@ def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config)
                 #préparation des configuration pour les tâches suivantes,
                 for res in didit:
                     where = findback[res[2].nbRun]
-                    if where >= len(nbRunTab): #Si on a déjà atteint le nombre de run max, on ajoute la sortie à tot et on réduit le search space
+                    if where + 1 >= len(nbRunTab): #Si on a déjà atteint le nombre de run max, on ajoute la sortie à tot et on réduit le search space
                         tot.extend(res[0])
                         all = sum(res[0], [])
                         found(res[0])
@@ -147,10 +147,19 @@ def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config)
                         continue
 
                     nextrun = nbRunTab[where+1] # Sinon on trouve le nombre de run suivant et on prépare le lancement des tâches filles
+                    onesized = []
                     for sub in res[0]:
+                        if len(sub) == 1:
+                            onesized.append(sub)
+                            continue 
                         newconf = config.copy()
                         newconf.setNbRun(nextrun)
                         nextArgs.append((sub, 2, newconf))
+                    if onesized != []:
+                        tot.extend(onesized)
+                        all = sum(onesized, [])
+                        found(onesized)
+                        searchspace = TaskEnv.listminus(searchspace, all)
                 if nextArgs != []:
                     storeResult = waiting.extend(nTask.map_invoke(nextArgs))
                 else:
