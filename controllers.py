@@ -16,13 +16,13 @@ class TestConfig(TaskEnv.Config):
     def GenProb(self, N :int, *args):
         import numpy as np
         if args:
-            for (cle, nbr) in args:
+            for (cle, nbr, et) in args:
                 try:
                     cle_int = int(cle)
                     if cle_int <=0:
                         raise ValueError("Génération du problem set impossible, la taille de l'ensemble passée est négative")
                     for _ in range(cle):
-                        self.Pb.append(np.random.randint(0, N, size = nbr).tolist())
+                        self.Pb.append(GenCloseSet(N, nbr, et))
                 except ValueError as e:
                     raise ValueError("Erreur lors de la génération du problem set : conversion en entier | " + str(e))
         else:
@@ -45,7 +45,24 @@ class TestConfig(TaskEnv.Config):
                 break
         return res
 
-
+def GenCloseSet(N : int, size : int, ET : float):
+    import numpy as np
+    center = np.random.randint(0, N)
+    val = [center]
+    for _ in range(1, size):
+        step = round(np.random.normal(loc = 0, scale = ET))
+        center += step
+        i = 1
+        while center in val:
+            up = center + i
+            down = center - i
+            if up not in val:
+                center = up
+            elif down not in val:
+                center = down
+            i += 1
+        val.append(center)
+    return val
             
 
 N = 2**10
