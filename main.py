@@ -1,3 +1,10 @@
+"""
+Created on : 2025-07-07
+Author   : Erwan Tchaleu
+Email    : erwan.tchale@gmail.com
+
+"""
+
 import controllers
 from Tasks import TaskEnv
 
@@ -24,9 +31,13 @@ def counter(n : int):
 def say(res, i):
     print(counter(i) + " results : " + res.__str__() + "\n" +"-"*80)
 
+def say2(res):
+    print("Found : " + res.__str__() + "\n" +"-"*80)
+
 def finalSay(res, i):
     print("\n" + "-"*80 +"\n" + "-"*80  + "\n" + "Recursions : " + i.__str__() + " | Total results : " + res.__str__()  +"\n" + "-"*80  +"\n" + "-"*80, end ="\n\n")
 
 config = controllers.TestConfig([[1, 3], [0]])
+nbRunTab = [1]
 
-controllers.RDDMIN(searchspace, say, finalSay, config)
+controllers.SRDDMIN(searchspace, nbRunTab, say2, config)
