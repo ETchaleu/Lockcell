@@ -20,14 +20,15 @@ class TestConfig(TaskEnv.Config):
         super().__init__()
     
     def GenProb(self, N :int, *args): # TODO: faire en sorte que les ensembles ne se surperposent pas
+        self.Pb = []
         if args:
-            for (cle, nbr, et) in args:
+            for (cle, nbr, et, p) in args:
                 try:
                     cle_int = int(cle)
                     if cle_int <=0:
                         raise ValueError("Génération du problem set impossible, la taille de l'ensemble passée est négative")
                     for _ in range(cle):
-                        self.Pb.append(GenCloseSet(N, nbr, et))
+                        self.Pb.append([GenCloseSet(N, nbr, et), p])
                 except ValueError as e:
                     raise ValueError("Erreur lors de la génération du problem set : conversion en entier | " + str(e))
         else:
@@ -36,9 +37,11 @@ class TestConfig(TaskEnv.Config):
     
     
     def Test(self, subspace):
+        import numpy as np
         for test in self.Pb:
-            if TestConfig.In(subspace, test):
-                return False
+            if TestConfig.In(subspace, test[0]):
+                if np.random.binomial(n=1, p = test[1]) == 1:
+                    return False
         return True
     
     @staticmethod
