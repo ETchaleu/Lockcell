@@ -37,10 +37,8 @@ class TestConfig(TaskEnv.Config):
     
     
     def Test(self, subspace):
-        import numpy as np
         for test in self.Pb:
             if TestConfig.In(subspace, test[0]):
-                if np.random.binomial(n=1, p = test[1]) == 1:
                     return False
         return True
     
@@ -132,7 +130,7 @@ def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config)
                 done = False
                 Args = [(res, 2, config) for res in result[0]]
                 storeResult = nTask.map_invoke(Args).wait().get() 
-                
+
                 #TODO: Quand l'implem de la disponibilité au plus tot sera prête faudra adapter
                 while not done:
                     ready = [i for i in range(len(storeResult))]
@@ -165,11 +163,16 @@ def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config)
                             all = sum(onesized, [])
                             found(onesized)
                             searchspace = TaskEnv.listminus(searchspace, all)
-                    if nextArgs != []:
-                        storeResult = waiting.extend(nTask.map_invoke(nextArgs))
+                    if nextArgs:
+                        if not waiting:
+                            storeResult = nTask.map_invoke(nextArgs).wait().get()
+                        else:
+                            storeResult = waiting.extend(nTask.map_invoke(nextArgs)).wait().get()
                     else:
-                        if waiting == []:
+                        if not waiting:
                             done = True
+                            continue
+                        storeResult = waiting.wait().get()
                 result = dd_min(searchspace, config).wait().get()
         if firstFail:    
             return tot
