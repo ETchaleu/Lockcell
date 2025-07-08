@@ -6,7 +6,7 @@ Email    : erwan.tchale@gmail.com
 """
 
 
-from pymonik import Pymonik, task
+from pymonik import Pymonik, MultiResultHandle
 
 from Tasks import nTask, TaskEnv
 import copy
@@ -136,7 +136,7 @@ def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config)
                     ready = [i for i in range(len(storeResult))]
                     notReady = TaskEnv.listminus([i for i in range(len(storeResult))], ready)
                     nextArgs = []
-                    waiting = [storeResult[idx] for idx in notReady]
+                    waiting = MultiResultHandle([storeResult[idx] for idx in notReady])
                     didit = [storeResult[idx] for idx in ready]
 
                     #préparation des configuration pour les tâches suivantes,
@@ -164,15 +164,16 @@ def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config)
                             found(onesized)
                             searchspace = TaskEnv.listminus(searchspace, all)
                     if nextArgs:
-                        if not waiting:
-                            storeResult = nTask.map_invoke(nextArgs).wait().get()
+                        if not waiting.result_handles:
+                            storeResult = nTask.map_invoke(nextArgs)
                         else:
-                            storeResult = waiting.extend(nTask.map_invoke(nextArgs)).wait().get()
+                            waiting.extend(nTask.map_invoke(nextArgs))
+                            storeResult = waiting
                     else:
                         if not waiting:
                             done = True
                             continue
-                        storeResult = waiting.wait().get()
+                    storeResult = storeResult.wait().get()
                 result = dd_min(searchspace, config).wait().get()
         if firstFail:    
             return tot
