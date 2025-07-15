@@ -12,9 +12,8 @@ from typing import List, Tuple
 from . import TaskEnv
 
 
-@task
+@task(active=False)
 def nTask(delta : list, n : int, config :TaskEnv.Config):
-    print("test", delta)
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}TASK : ".format(n) + delta.__str__()
     if config.Test(delta): # Test le delta passé en param
@@ -38,9 +37,11 @@ def nTask(delta : list, n : int, config :TaskEnv.Config):
 #########################################################################################################
 #########################################################################################################
 
-@task
+@task(active=False)
 def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config :TaskEnv.Config):
 
+    print(answers)
+    print(answers[0])
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}AGG : ".format(n) + subdiv.__str__()
      
@@ -95,7 +96,7 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
 #########################################################################################################
 #########################################################################################################
 
-@task
+@task(active=False)
 def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config):
 
     ### Ecriture des logs en mémoire
