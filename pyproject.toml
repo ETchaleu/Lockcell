@@ -6,5 +6,8 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "numpy>=2.2.6",
-    "pymonik>=0.2.2",
+    "pymonik",
 ]
+
+[tool.uv.sources]
+pymonik = { path = "../PymoniK/pymonik" }

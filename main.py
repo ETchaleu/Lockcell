@@ -44,6 +44,7 @@ config.GenProb(N, (5, 1, 0, 0.3), (2, 2, 2, 0.5), (1, 3, 4, 0.5)) # (combien, ta
 nbRunTab = [1, 4, 6]
 print(config.Pb)
 input("press to continue...")
-res = controllers.SRDDMIN(searchspace, nbRunTab, say2, config)
+#res = controllers.SRDDMIN(searchspace, nbRunTab, say2, config)
+res = controllers.RDDMIN(searchspace, say, finalSay, config)
 print(res)
 print(config.Pb)

@@ -14,7 +14,7 @@ from . import TaskEnv
 
 @task
 def nTask(delta : list, n : int, config :TaskEnv.Config):
-
+    print("test", delta)
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}TASK : ".format(n) + delta.__str__()
     if config.Test(delta): # Test le delta passé en param
