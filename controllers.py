@@ -11,6 +11,37 @@ from pymonik import Pymonik, MultiResultHandle
 from Tasks import nTask, TaskEnv
 import copy
 
+class IdGen():
+    def __init__(self) -> None:
+        self.count = -1
+    
+    def Gen(self):
+        self.count += 1
+        return self.count
+    
+gen = IdGen()
+    
+class Graph():
+    def __init__(self, obj = None):
+        self.id = gen.Gen()
+        self.son = []
+        self.up = []
+        if obj != None:
+            self.up = obj
+        self.out = None
+
+    def sup(self, obj, data):
+        self.up.append((obj, data))
+    
+    def down(self, obj, data):
+        self.son.append((obj, data))
+    
+    def sout(self, obj, data):
+        self.out = (obj, data)
+    
+    def __repr__(self) -> str:
+        return f"Graph : {self.id}"
+
 class TestConfig(TaskEnv.Config):
     def __init__(self, *args, nbRun = None):
         self.Pb = []
@@ -78,12 +109,12 @@ def GenCloseSet(N : int, size : int, ET : float):
 N = 2**10
 searchspace = [i for i in range(N)]
 
-def dd_min(searchspace :list, config : TaskEnv.Config):
-    return nTask.invoke(searchspace, 2, config) # type: ignore
+def dd_min(searchspace :list, config : TaskEnv.Config, graph : Graph):
+    return nTask.invoke(searchspace, 2, config, graph) # type: ignore
 
-def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config):
+def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, graph : Graph):
     with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
-        result = dd_min(searchspace, config).wait().get() 
+        result = dd_min(searchspace, config, graph).wait().get() 
         i = 1
         tot = []
         while result[1] == False:
@@ -102,7 +133,7 @@ def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config):
             tot.extend(res)
             all = sum(result[0], [])
             searchspace = TaskEnv.listminus(searchspace, all)
-            result = dd_min(searchspace, config).wait().get()
+            result = dd_min(searchspace, config, graph).wait().get()
             i += 1
         if finalfunc != None:
             finalfunc(tot, i)

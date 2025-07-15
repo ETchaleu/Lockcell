@@ -13,35 +13,44 @@ from . import TaskEnv
 
 
 @task(active=False)
-def nTask(delta : list, n : int, config :TaskEnv.Config):
+def nTask(delta : list, n : int, config :TaskEnv.Config, me):
+    from controllers import Graph
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}TASK : ".format(n) + delta.__str__()
     if config.Test(delta): # Test le delta passé en param
+        me.sout(me, [None, True])
         return None, True, config
     
     # Si le test fail
 
     # Si |Delta| = 1 on a fini
     if len(delta) == 1:
+        me.sout(me, [[delta], False])
         return [delta], False, config
     
 
     #Sinon on split en n (= granularity)
     subdiv = TaskEnv.split(delta, n)
-    subdivArg = [(delta, 2, config) for delta in subdiv] #Mise en forme pour le passage en paramètre
-
+    subdivArg = [(delta, 2, config, Graph()) for delta in subdiv] #Mise en forme pour le passage en paramètre
+    GrOut = Graph()
     result = nTask.map_invoke(subdivArg) #type: ignore
+    for i in subdivArg:
+        me.down(i[3], i[0])
+        out = i[3].out[0]
+        while out != out.out[0]:
+            out = out.out
+        GrOut.sup(*out.out)
+    me.sout(GrOut, None)
 
-    return nAGG.invoke(subdiv, result, n, config, delegate = True)#type: ignore
+    return nAGG.invoke(subdiv, result, n, config,  GrOut, delegate = True)#type: ignore
 
 #########################################################################################################
 #########################################################################################################
 
 @task(active=False)
-def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config :TaskEnv.Config):
+def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config :TaskEnv.Config, me):
+    from controllers import Graph
 
-    print(answers)
-    print(answers[0])
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}AGG : ".format(n) + subdiv.__str__()
      
@@ -59,12 +68,14 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
         for answer in answers:
             if answer[0] != None:
                 rep.extend(answer[0])
+        me.sout(me, [rep, False])
         return rep, False, config
     
 
     if n == 2: # Si la granularité vaut 2, on ne test pas les complémentaires et on augmente directement la granularité
         omega = sum(subdiv, [])
         if len(omega) <= n:
+            me.sout(me, [omega], False)
             return [omega], False, config
         
         newdivision = [] # Pour le 2nAGG
@@ -74,15 +85,21 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
         for delta in subdiv: # Mise en forme des lis
             if len(delta) >= 2:
                 temp = TaskEnv.split(delta, 2)
-                newdivisionArg.append((temp[0], 2, config))
-                newdivisionArg.append((temp[1], 2, config))
+                newdivisionArg.append((temp[0], 2, config, Graph()))
+                newdivisionArg.append((temp[1], 2, config, Graph()))
                 newdivision.append(temp[0])
                 newdivision.append(temp[1])
             else :
-                newdivisionArg.append((delta, 2, config))
+                newdivisionArg.append((delta, 2, config, Graph()))
                 newdivision.append(delta)
+            
         result = nTask.map_invoke(newdivisionArg)#type: ignore
-        return nAGG.invoke(newdivision, result, k, config, delegate = True)#type: ignore
+        GrOut = Graph()
+        for i in newdivision:
+            me.down(i[3], i[0])
+            GrOut.sup(*i[3].out)
+
+        return nAGG.invoke(newdivision, result, k, config, GrOut, delegate = True)#type: ignore
     
     #Sinon on teste les complémentaires
     
@@ -97,7 +114,8 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
 #########################################################################################################
 
 @task(active=False)
-def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config):
+def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config, me):
+    from controllers import Graph
 
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}AGG2 : ".format(n) + subdiv.__str__()
@@ -114,12 +132,14 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
         for answer in answers:
             if answer[0] != None:
                 rep.extend(answer[0])
+        me.sout(me, [rep, False])
         return rep, False, config
 
     # Sinon on augmente la granularité
 
     omega = sum(subdiv, [])
     if len(omega) <= n: # Si granularité max on retourne le delta courant (omega)
+        me.sout(me, [[omega], False])
         return [omega], False, config
     
     newdivision = [] # Pour le 2nAGG
@@ -129,12 +149,17 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
     for delta in subdiv: # Mise en forme des lis
         if len(delta) >= 2:
             temp = TaskEnv.split(delta, 2)
-            newdivisionArg.append((temp[0], 2, config))
-            newdivisionArg.append((temp[1], 2, config))
+            newdivisionArg.append((temp[0], 2, config, Graph()))
+            newdivisionArg.append((temp[1], 2, config, Graph()))
             newdivision.append(temp[0])
             newdivision.append(temp[1])
         else :
-            newdivisionArg.append((delta, 2, config))
+            newdivisionArg.append((delta, 2, config, Graph()))
             newdivision.append(delta)
     result = nTask.map_invoke(newdivisionArg)#type: ignore
-    return nAGG.invoke(newdivision, result, k, config, delegate = True) # type: ignore
+    GrOut = Graph()
+    for i in newdivisionArg:
+        me.down(i[3], i[0])
+        GrOut.sup(*i[3].out)
+
+    return nAGG.invoke(newdivision, result, k, config, GrOut, delegate = True) # type: ignore

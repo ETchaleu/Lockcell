@@ -38,13 +38,13 @@ def finalSay(res, i):
     print("\n" + "-"*80 +"\n" + "-"*80  + "\n" + "Recursions : " + i.__str__() + " | Total results : " + res.__str__()  +"\n" + "-"*80  +"\n" + "-"*80, end ="\n\n")
 
 # Problème d'implémentation de la stochasticité, en effet les 1 minimaux d'un période ne failent pas forcément à la suivanten il faut un cache ou alors transmette le fait que ce truc ne marche pas
-
+graph = controllers.Graph()
 config = controllers.TestConfig()
 config.GenProb(N, (2, 1, 0, 0.3))#, (2, 2, 2, 0.5), (1, 3, 4, 0.5)) # (combien, taille, écart type)
 nbRunTab = [1, 4, 6]
 print(config.Pb)
 input("press to continue...")
 #res = controllers.SRDDMIN(searchspace, nbRunTab, say2, config)
-res = controllers.RDDMIN(searchspace, say, finalSay, config)
+res = controllers.RDDMIN(searchspace, say, finalSay, config, graph)
 print(res)
 print(config.Pb)
