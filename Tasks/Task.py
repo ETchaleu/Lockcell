@@ -11,12 +11,13 @@ import numpy as np
 from typing import List, Tuple
 from . import TaskEnv
 
-@task(active=False)
-def nTask(delta : list, n : int, config :TaskEnv.Config, me):
-    from controllers import Graph
+onArmoniK = True
 
+@task(active=onArmoniK)
+def nTask(delta : list, n : int, config :TaskEnv.Config, me):
     ############# PrintGraph
     if me != None:
+        from controllers import Graph
         me.setType(f"{n}Task")
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}TASK : ".format(n) + delta.__str__()
@@ -63,12 +64,12 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me):
 #########################################################################################################
 #########################################################################################################
 
-@task(active=False)
+@task(active=onArmoniK)
 def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config :TaskEnv.Config, me):
-    from controllers import Graph
 
     ############# PrintGraph
     if me != None:
+        from controllers import Graph
         me.setType(f"{n}AGG")
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}AGG : ".format(n) + subdiv.__str__()
@@ -152,12 +153,12 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
 #########################################################################################################
 #########################################################################################################
 
-@task(active=False)
+@task(active=onArmoniK)
 def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config, me):
-    from controllers import Graph
 
     ############# PrintGraph
     if me != None:
+        from controllers import Graph
         me.setType(f"{n}AGG2")
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}AGG2 : ".format(n) + subdiv.__str__()

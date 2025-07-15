@@ -13,8 +13,8 @@ cloudpickle.register_pickle_by_value(TaskEnv) # Pour les modules de ton code tu 
 cloudpickle.register_pickle_by_value(controllers) # Pour les modules de ton code tu fait du sort que ca soit pickler par value
 
 
-printgraph = True
-N = 2**8
+printgraph = False
+N = 2**3
 searchspace = [i for i in range(N)]
 
 def counter(n : int):
@@ -90,6 +90,7 @@ def print1(g: controllers.Graph):
         data = data[0]
         Gr.node("d_" + g.id, data.__str__(), shape="box", fontcolor=color)
         Gr.edge(g.id, "d_" + g.id)
+
 if printgraph:
     Gr.node(graph.id, graph.type)
     print1(graph)
