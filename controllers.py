@@ -9,6 +9,7 @@ Email    : erwan.tchale@gmail.com
 from pymonik import Pymonik, MultiResultHandle
 
 from Tasks import nTask, TaskEnv
+from typing import List, Tuple, Optional
 import copy
 
 class IdGen():
@@ -23,12 +24,16 @@ gen = IdGen()
     
 class Graph():
     def __init__(self, obj = None):
-        self.id = gen.Gen()
+        self.type = "ERR"
+        self.id = gen.Gen().__str__()
         self.son = []
         self.up = []
         if obj != None:
             self.up = obj
-        self.out = None
+        self.out : Tuple[Graph, object] = (self, None)
+
+    def setType(self, type :str):
+        self.type = type
 
     def sup(self, obj, data):
         self.up.append((obj, data))
@@ -109,10 +114,10 @@ def GenCloseSet(N : int, size : int, ET : float):
 N = 2**10
 searchspace = [i for i in range(N)]
 
-def dd_min(searchspace :list, config : TaskEnv.Config, graph : Graph):
+def dd_min(searchspace :list, config : TaskEnv.Config, graph : Optional[Graph]):
     return nTask.invoke(searchspace, 2, config, graph) # type: ignore
 
-def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, graph : Graph):
+def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, graph : Optional[Graph] = None):
     with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
         result = dd_min(searchspace, config, graph).wait().get() 
         i = 1
@@ -133,13 +138,13 @@ def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, graph :
             tot.extend(res)
             all = sum(result[0], [])
             searchspace = TaskEnv.listminus(searchspace, all)
-            result = dd_min(searchspace, config, graph).wait().get()
+            result = dd_min(searchspace, config, Graph()).wait().get()
             i += 1
         if finalfunc != None:
             finalfunc(tot, i)
         return tot, i
 
-def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config):
+def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config, graph : Optional[Graph] = None):
     #TODO: Preprocessing of nbRunTab
 
     findback = {}
@@ -148,66 +153,66 @@ def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config)
     for run in nbRunTab:
         findback[run] = i
         i += 1
-    #with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
-    firstFail = False
-    for run in nbRunTab:
-        config.setNbRun(run)
-        result = dd_min(searchspace, config).wait().get()
-        if result[1] == True:
-            continue
-        while result[1] == False:
-            firstFail = True
+    with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
+        firstFail = False
+        for run in nbRunTab:
             config.setNbRun(run)
-            done = False
-            Args = [(res, 2, config) for res in result[0]]
-            storeResult = nTask.map_invoke(Args).wait().get() 
+            result = dd_min(searchspace, config, graph).wait().get()
+            if result[1] == True:
+                continue
+            while result[1] == False:
+                firstFail = True
+                config.setNbRun(run)
+                done = False
+                Args = [(res, 2, config) for res in result[0]]
+                storeResult = nTask.map_invoke(Args).wait().get() 
 
-            #TODO: Quand l'implem de la disponibilité au plus tot sera prête faudra adapter
-            while not done:
-                ready = [i for i in range(len(storeResult))]
-                notReady = TaskEnv.listminus([i for i in range(len(storeResult))], ready)
-                nextArgs = []
-                waiting = MultiResultHandle([storeResult[idx] for idx in notReady])
-                didit = [storeResult[idx] for idx in ready]
+                #TODO: Quand l'implem de la disponibilité au plus tot sera prête faudra adapter
+                while not done:
+                    ready = [i for i in range(len(storeResult))]
+                    notReady = TaskEnv.listminus([i for i in range(len(storeResult))], ready)
+                    nextArgs = []
+                    waiting = MultiResultHandle([storeResult[idx] for idx in notReady])
+                    didit = [storeResult[idx] for idx in ready]
 
-                #préparation des configuration pour les tâches suivantes,
-                for res in didit:
-                    where = findback[res[2].nbRun]
-                    if where + 1 >= len(nbRunTab): #Si on a déjà atteint le nombre de run max, on ajoute la sortie à tot et on réduit le search space
-                        tot.extend(res[0])
-                        all = sum(res[0], [])
-                        found(res[0])
-                        searchspace = TaskEnv.listminus(searchspace, all)
-                        continue
+                    #préparation des configuration pour les tâches suivantes,
+                    for res in didit:
+                        where = findback[res[2].nbRun]
+                        if where + 1 >= len(nbRunTab): #Si on a déjà atteint le nombre de run max, on ajoute la sortie à tot et on réduit le search space
+                            tot.extend(res[0])
+                            all = sum(res[0], [])
+                            found(res[0])
+                            searchspace = TaskEnv.listminus(searchspace, all)
+                            continue
 
-                    nextrun = nbRunTab[where+1] # Sinon on trouve le nombre de run suivant et on prépare le lancement des tâches filles
-                    onesized = []
-                    for sub in res[0]:
-                        if len(sub) == 1:
-                            onesized.append(sub)
-                            continue 
-                        newconf = config.copy()
-                        newconf.setNbRun(nextrun)
-                        nextArgs.append((sub, 2, newconf))
-                    if onesized != []:
-                        tot.extend(onesized)
-                        all = sum(onesized, [])
-                        found(onesized)
-                        searchspace = TaskEnv.listminus(searchspace, all)
-                if nextArgs:
-                    if not waiting.result_handles:
-                        storeResult = nTask.map_invoke(nextArgs)
+                        nextrun = nbRunTab[where+1] # Sinon on trouve le nombre de run suivant et on prépare le lancement des tâches filles
+                        onesized = []
+                        for sub in res[0]:
+                            if len(sub) == 1:
+                                onesized.append(sub)
+                                continue 
+                            newconf = config.copy()
+                            newconf.setNbRun(nextrun)
+                            nextArgs.append((sub, 2, newconf))
+                        if onesized != []:
+                            tot.extend(onesized)
+                            all = sum(onesized, [])
+                            found(onesized)
+                            searchspace = TaskEnv.listminus(searchspace, all)
+                    if nextArgs:
+                        if not waiting.result_handles:
+                            storeResult = nTask.map_invoke(nextArgs)
+                        else:
+                            waiting.extend(nTask.map_invoke(nextArgs))
+                            storeResult = waiting
                     else:
-                        waiting.extend(nTask.map_invoke(nextArgs))
-                        storeResult = waiting
-                else:
-                    if not waiting:
-                        done = True
-                        continue
-                storeResult = storeResult.wait().get()
-            result = dd_min(searchspace, config).wait().get()
-    if firstFail:    
-        return tot
-    raise RuntimeError(f"SRDDMin : testing the subset {nbRunTab[-1]} times has never returned false")
+                        if not waiting:
+                            done = True
+                            continue
+                    storeResult = storeResult.wait().get()
+                result = dd_min(searchspace, config).wait().get()
+        if firstFail:    
+            return tot
+        raise RuntimeError(f"SRDDMin : testing the subset {nbRunTab[-1]} times has never returned false")
 
 
