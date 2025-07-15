@@ -48,3 +48,6 @@ input("press to continue...")
 res = controllers.RDDMIN(searchspace, say, finalSay, config, graph)
 print(res)
 print(config.Pb)
+
+
+def 
