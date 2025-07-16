@@ -30,7 +30,7 @@ class Graph():
         self.up = []
         if obj != None:
             self.up = obj
-        self.out : Tuple[Graph, object] = (self, None)
+        self.out : Tuple[Graph, Tuple[list, bool]] = (self, None)
 
     def setType(self, type :str):
         self.type = type

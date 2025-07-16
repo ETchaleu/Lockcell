@@ -11,12 +11,14 @@ import numpy as np
 from typing import List, Tuple
 from . import TaskEnv
 
-onArmoniK = True
+onArmoniK = False
 
 @task(active=onArmoniK)
 def nTask(delta : list, n : int, config :TaskEnv.Config, me):
+    
     ############# PrintGraph
-    if me != None:
+    gPrint = (me != None)
+    if gPrint:
         from controllers import Graph
         me.setType(f"{n}Task")
     ### Ecriture des logs en mémoire
@@ -24,7 +26,7 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me):
     if config.Test(delta): # Test le delta passé en param
 
         ############# PrintGraph
-        if me != None:
+        if gPrint:
             me.sout(me, [None, True])
         return None, True, config
     
@@ -34,23 +36,23 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me):
     if len(delta) == 1:
 
         ############# PrintGraph
-        if me != None:
+        if gPrint:
             me.sout(me, [[delta], False])
         return [delta], False, config
     
 
     #Sinon on split en n (= granularity)
     subdiv = TaskEnv.split(delta, n)
-    subdivArg = [(delta, 2, config, Graph() if me != None else None) for delta in subdiv] #Mise en forme pour le passage en paramètre
+    subdivArg = [(delta, 2, config, Graph() if gPrint else None) for delta in subdiv] #Mise en forme pour le passage en paramètre
     GrOut = None
 
     ############# PrintGraph
-    if me != None:
+    if gPrint:
         GrOut = Graph()
     result = nTask.map_invoke(subdivArg) #type: ignore
 
     ############# PrintGraph
-    if me != None:
+    if gPrint:
         for i in subdivArg:
             me.down(i[3], i[0])
             out = i[3].out[0]
@@ -68,7 +70,8 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me):
 def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config :TaskEnv.Config, me):
 
     ############# PrintGraph
-    if me != None:
+    gPrint = (me != None)
+    if gPrint:
         from controllers import Graph
         me.setType(f"{n}AGG")
     ### Ecriture des logs en mémoire
@@ -90,7 +93,7 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
                 rep.extend(answer[0])
 
         ############# PrintGraph
-        if me != None:
+        if gPrint:
             me.sout(me, [rep, False])
         return rep, False, config
     
@@ -100,7 +103,7 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
         if len(omega) <= n:
 
             ############# PrintGraph
-            if me != None:
+            if gPrint:
                 me.sout(me, [[omega], False])
             return [omega], False, config
         
@@ -111,19 +114,19 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
         for delta in subdiv: # Mise en forme des lis
             if len(delta) >= 2:
                 temp = TaskEnv.split(delta, 2)
-                newdivisionArg.append((temp[0], 2, config, Graph() if me != None else None))
-                newdivisionArg.append((temp[1], 2, config, Graph() if me != None else None))
+                newdivisionArg.append((temp[0], 2, config, Graph() if gPrint else None))
+                newdivisionArg.append((temp[1], 2, config, Graph() if gPrint else None))
                 newdivision.append(temp[0])
                 newdivision.append(temp[1])
             else :
-                newdivisionArg.append((delta, 2, config, Graph() if me != None else None))
+                newdivisionArg.append((delta, 2, config, Graph() if gPrint else None))
                 newdivision.append(delta)
             
         result = nTask.map_invoke(newdivisionArg)#type: ignore
         GrOut = None
 
         ############# PrintGraph
-        if me != None:
+        if gPrint:
             GrOut = Graph()
             for i in newdivisionArg:
                 me.down(i[3], i[0])
@@ -136,12 +139,12 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
     
     omega = sum(subdiv, [])
     k = max(2, n-1)
-    nablas = [(TaskEnv.listminus(omega, delta), k, config, Graph() if me != None else None) for delta in subdiv]
+    nablas = [(TaskEnv.listminus(omega, delta), k, config, Graph() if gPrint else None) for delta in subdiv]
     result = nTask.map_invoke(nablas)#type: ignore
     GrOut = None
 
     ############# PrintGraph
-    if me != None:
+    if gPrint:
         GrOut = Graph()
         for i in nablas:
             me.down(i[3], i[0])
@@ -157,7 +160,8 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
 def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config, me):
 
     ############# PrintGraph
-    if me != None:
+    gPrint = (me != None)
+    if gPrint:
         from controllers import Graph
         me.setType(f"{n}AGG2")
     ### Ecriture des logs en mémoire
@@ -177,7 +181,7 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
                 rep.extend(answer[0])
 
         ############# PrintGraph
-        if me != None: 
+        if gPrint: 
             me.sout(me, [rep, False])
         return rep, False, config
 
@@ -187,7 +191,7 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
     if len(omega) <= n: # Si granularité max on retourne le delta courant (omega)
 
         ############# PrintGraph
-        if me != None:
+        if gPrint:
             me.sout(me, [[omega], False])
         return [omega], False, config
     
@@ -198,18 +202,18 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
     for delta in subdiv: # Mise en forme des lis
         if len(delta) >= 2:
             temp = TaskEnv.split(delta, 2)
-            newdivisionArg.append((temp[0], 2, config, Graph() if me != None else None))
-            newdivisionArg.append((temp[1], 2, config, Graph() if me != None else None))
+            newdivisionArg.append((temp[0], 2, config, Graph() if gPrint else None))
+            newdivisionArg.append((temp[1], 2, config, Graph() if gPrint else None))
             newdivision.append(temp[0])
             newdivision.append(temp[1])
         else :
-            newdivisionArg.append((delta, 2, config, Graph() if me != None else None))
+            newdivisionArg.append((delta, 2, config, Graph() if gPrint else None))
             newdivision.append(delta)
     result = nTask.map_invoke(newdivisionArg)#type: ignore
     GrOut = None
 
     ############# PrintGraph
-    if me != None:
+    if gPrint:
         GrOut = Graph()
         for i in newdivisionArg:
             me.down(i[3], i[0])
