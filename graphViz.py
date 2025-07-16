@@ -18,22 +18,50 @@ class VizPrint:
     def TrueFalse(self, val):
         return "green" if val else "black"
 
+    def UpColorSelector(self, g : Graph):
+        res = ["black"]*len(g.up)
+        mem = {}
+        mem2 = {}
+        for (idx, _in) in enumerate(g.up):
+                out = self.findOut(_in[0])
+
+                data = out.out[1][0]
+                if data == None:
+                    continue
+
+                for dat in data: # On vérifie si tous les sous ensembles de data on déjà été vus
+                    val = dat.__str__()
+                    if not val in mem2:
+                        mem2[val] = [idx]
+                    else:
+                        mem2[val].append(idx)
+
+                data = data.__str__() 
+                if not data in mem:   # Qqn a-t-il déjà fait exactement la même chose ?
+                    mem[data] = [idx]
+                else:
+                    mem[data].append(idx)
+
+        for _, val in mem2.items():
+            if len(val) >= 2:
+                for idx in val:
+                    res[idx] = "orange"
+
+        for _, val in mem.items():
+            if len(val) >= 2:
+                for idx in val:
+                    res[idx] = "red"
+        return res
+
     def print1(self, g: Graph):
         if g.up:
-            mem = {}
+            color = self.UpColorSelector(g)
+            i = 0
             for _in in g.up:
                 out = self.findOut(_in[0])
                 dataId = "d_" + out.id
-                data = out.out[1][0]
-                if data == None:
-                    self.Gr.edge(dataId, g.id)
-                    continue
-                data = data.__str__()
-                if not data in mem:
-                    self.Gr.edge(dataId, g.id)
-                    mem[data] = 1
-                else:
-                    self.Gr.edge(dataId, g.id, color="red")
+                self.Gr.edge(dataId, g.id, color=color[i])
+                i+= 1
         if g.son:
             for _son in g.son:
                 son = _son[0]
