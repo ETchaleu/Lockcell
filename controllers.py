@@ -9,7 +9,43 @@ Email    : erwan.tchale@gmail.com
 from pymonik import Pymonik, MultiResultHandle
 
 from Tasks import nTask, TaskEnv
+from typing import List, Tuple, Optional
 import copy
+
+class IdGen():
+    def __init__(self) -> None:
+        self.count = -1
+    
+    def Gen(self):
+        self.count += 1
+        return self.count
+    
+gen = IdGen()
+    
+class Graph():
+    def __init__(self, obj = None):
+        self.type = "ERR"
+        self.id = gen.Gen().__str__()
+        self.son = []
+        self.up = []
+        if obj != None:
+            self.up = obj
+        self.out : Tuple[Graph, Tuple[list, bool]] = (self, None) # type: ignore
+
+    def setType(self, type :str):
+        self.type = type
+
+    def sup(self, obj, data):
+        self.up.append((obj, data))
+    
+    def down(self, obj, data):
+        self.son.append((obj, data))
+    
+    def sout(self, obj, data):
+        self.out = (obj, data)
+    
+    def __repr__(self) -> str:
+        return f"Graph : {self.id}"
 
 class TestConfig(TaskEnv.Config):
     def __init__(self, *args, nbRun = None):
@@ -78,12 +114,12 @@ def GenCloseSet(N : int, size : int, ET : float):
 N = 2**10
 searchspace = [i for i in range(N)]
 
-def dd_min(searchspace :list, config : TaskEnv.Config):
-    return nTask.invoke(searchspace, 2, config) # type: ignore
+def dd_min(searchspace :list, config : TaskEnv.Config, graph : Optional[Graph] = None):
+    return nTask.invoke(searchspace, 2, config, graph) # type: ignore
 
-def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config):
+def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, graph : Optional[Graph] = None):
     with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
-        result = dd_min(searchspace, config).wait().get() 
+        result = dd_min(searchspace, config, graph).wait().get() 
         i = 1
         tot = []
         while result[1] == False:
@@ -108,7 +144,7 @@ def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config):
             finalfunc(tot, i)
         return tot, i
 
-def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config):
+def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config, graph : Optional[Graph] = None):
     #TODO: Preprocessing of nbRunTab
 
     findback = {}
@@ -121,7 +157,7 @@ def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config)
         firstFail = False
         for run in nbRunTab:
             config.setNbRun(run)
-            result = dd_min(searchspace, config).wait().get()
+            result = dd_min(searchspace, config, graph).wait().get()
             if result[1] == True:
                 continue
             while result[1] == False:
