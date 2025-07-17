@@ -9,12 +9,18 @@ Email    : erwan.tchale@gmail.com
 from abc import ABC, abstractmethod
 
 
+
 class Config(ABC):
     def __init__(self, nbRun = None):
         self.nbRun = 1
         if nbRun != None:
             self.nbRun = nbRun
+        self.mode = "default"
         pass
+    
+    def setMode(self, mode):
+        self.mode = mode
+
     
     @abstractmethod
     def Test(self, subspace) -> bool:
