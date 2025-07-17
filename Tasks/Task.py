@@ -320,24 +320,65 @@ def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
     omega = sum(subdiv, []) # Utile pour faire tous les complémentaires etc
 
 
-    if test: ##### Si l'un des complémentaire à fail, on analyse
-
-
-        if False:
-            pass
-        else: # Si on n'arrive pas à déterminer le nombre de failing subset
+    if test: ##### Si l'un des complémentaire a fail, on analyse
+            
+                
+        # Est-on au niveau de découpage le plus fin
+        granularityMax = (len(omega) == n) 
+        if granularityMax and (len(idxs) == 1): #TODO: cf. preuve 
+            rep = [TaskEnv.listminus(omega, subdiv[idxs[0]])]
             ### PrintGraph ###
             if gPrint:
-                me.setType(f"{n}Analyser - Down\nNo opti")
-                
-            # Est-on au niveau de découpage le plus fin
-            granularityMax = (len(omega) == n) 
-            if granularityMax and (len(idxs) == 1): #TODO: cf. preuve 
-                rep = [TaskEnv.listminus(omega, subdiv[idxs[0]])]
-                ### PrintGraph ###
-                if gPrint:
-                    me.sout(me, [rep, False])
-                return rep, False
+                me.addLabel("One fail")
+                me.sout(me, [rep, False])
+            return rep, False
+
+        Achanger = False #TODO: Activation de l'analyse ou pas à retirer
+        if Achanger: 
+
+
+            ### PrintGraph ###
+            if gPrint:
+                me.setType(f"{n}Analyser - Middle")
+            
+            # On prépare les arguments pour chaque nabla qui bug, avec le nabla associé, la subdiv adaptée et on a déjà le resultat
+            Args = []
+            vals = [True for i in range(n)]
+            for idx in idxs:
+                vals[idx] = False
+            tab = []
+
+            #Création des Arguments pour tester les intersections
+            for i in range(n):
+                if vals[i] == False:
+                    tab.append([])
+                    for j in range(i+1, n):
+                        if vals[j] == False:
+                            intersection = TaskEnv.listminus(omega, subdiv[i])
+                            intersection = TaskEnv.listminus(intersection, subdiv[j])
+                            Args.append((intersection, 2, config, Graph() if gPrint else None, False))
+                            tab[-1].append(j)
+            
+            
+            answers = nTask.map_invoke(Args)
+            GrOut = None
+
+            ### PrintGraph ###
+            if gPrint:
+                GrOut = Graph()
+                for i in Args:
+                    me.down(i[3], i[0])
+                    GrOut.sup(*i[3].out)
+                me.sout(GrOut, None)
+
+            return nAnalyserDown.invoke(subdiv, answers, tab, n, config, GrOut, delegate = True)
+        
+
+        else: # Pas de traitement
+
+            ### PrintGraph ###
+            if gPrint:
+                me.addLabel(f"No Opti")
             
             # On prépare les arguments pour chaque nabla qui bug, avec le nabla associé, la subdiv adaptée et on a déjà le resultat
             Args = []
@@ -345,8 +386,8 @@ def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
             for idx in idxs:
                 vals[idx] = False
             for idx in range(n):
-                k = min(2*(n-1), len(omega) - len(subdiv[idx]))
-                Args.append((TaskEnv.listminus(omega, subdiv[idx]), k, config, Graph() if gPrint else None, True, vals[idx]))
+                k = min(n-1, len(omega) - len(subdiv[idx]))
+                Args.append((TaskEnv.listminus(omega, subdiv[idx]), k, config, Graph(emphas = "orange") if gPrint else None, True, vals[idx]))
             answers = nTask.map_invoke(Args)
 
             GrOut = None
@@ -399,3 +440,9 @@ def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
         me.sout(GrOut, None)
 
     return nAGG.invoke(newdivision, result, k, config, GrOut, delegate = True) # type: ignore
+
+def nAnalyserDown(subdiv : list, answers : List[Tuple[List[list] | None, bool]], matrix, n : int, config : TaskEnv.Config, me):
+    #TODO: transform matrix into matrix
+    #TODO: analyse the matrix
+    #TODO: Launch calculus on the rest
+    pass

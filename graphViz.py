@@ -1,3 +1,10 @@
+"""
+Created on : 2025-07-17
+Author   : Erwan Tchaleu
+Email    : erwan.tchale@gmail.com
+
+"""
+
 ### AFFICHAGE DU GRAPHE DES TÂCHES
 
 from graphviz import Digraph
