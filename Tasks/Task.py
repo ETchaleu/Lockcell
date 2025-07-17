@@ -14,7 +14,7 @@ from . import TaskEnv
 onArmoniK = False
 
 @task(active=onArmoniK)
-def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True):
+def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True, Result = None):
     
     ############# PrintGraph
     gPrint = (me != None)
@@ -23,7 +23,16 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True):
         me.setType(f"{n}Task")
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}TASK : ".format(n) + delta.__str__()
-    if config.Test(delta): # Test le delta passé en param
+
+    # Si le resultat est déjà connu on ne teste 
+    test = None
+    if Result == None:
+        test = config.Test(delta)
+    else:
+        test = Result
+
+
+    if test: # Test le delta passé en param
 
         ############# PrintGraph
         if gPrint:
