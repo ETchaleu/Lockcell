@@ -86,11 +86,23 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
             test = True
             break
 
-    if test: # Si un des subset a fail on a fini et on renvoie le résultat
-        rep = []
-        for answer in answers:
-            if answer[0] != None:
-                rep.extend(answer[0])
+    def merge(tabofrep): # Merge sans doublon
+        dic = {}
+        res = []
+        for rep in tabofrep:
+            if rep[0] == None:
+                continue
+            for val in rep[0]:
+                key = val.__str__()
+                if key not in dic:
+                    dic[key] = val
+                    res.append(val)
+        return res
+
+            
+
+    if test: # Si l'un des complémentaire à fail, on retourne directe l'union des set de subset
+        rep = merge(answers)
 
         ############# PrintGraph
         if gPrint:
@@ -174,11 +186,23 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
             test = True
             break
     
+    def merge(tabofrep): # Merge sans doublon
+        dic = {}
+        res = []
+        for rep in tabofrep:
+            if rep[0] == None:
+                continue
+            for val in rep[0]:
+                key = val.__str__()
+                if key not in dic:
+                    dic[key] = val
+                    res.append(val)
+        return res
+
+            
+
     if test: # Si l'un des complémentaire à fail, on retourne directe l'union des set de subset
-        rep = []
-        for answer in answers:
-            if answer[0] != None:
-                rep.extend(answer[0])
+        rep = merge(answers)
 
         ############# PrintGraph
         if gPrint: 
