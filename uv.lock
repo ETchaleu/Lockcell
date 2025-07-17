@@ -229,11 +229,7 @@ wheels = [
 
 [[package]]
 name = "lockcell"
-<<<<<<< HEAD
-version = "0.2.1"
-=======
 version = "0.3.3"
->>>>>>> dev
 source = { virtual = "." }
 dependencies = [
     { name = "graphviz" },
