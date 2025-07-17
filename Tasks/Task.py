@@ -28,7 +28,7 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me):
         ############# PrintGraph
         if gPrint:
             me.sout(me, [None, True])
-        return None, True, config
+        return None, True
     
     # Si le test fail
 
@@ -38,7 +38,7 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me):
         ############# PrintGraph
         if gPrint:
             me.sout(me, [[delta], False])
-        return [delta], False, config
+        return [delta], False
     
 
     #Sinon on split en n (= granularity)
@@ -107,7 +107,7 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
         ############# PrintGraph
         if gPrint:
             me.sout(me, [rep, False])
-        return rep, False, config
+        return rep, False
     
 
     if n == 2: # Si la granularité vaut 2, on ne test pas les complémentaires et on augmente directement la granularité
@@ -117,7 +117,7 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
             ############# PrintGraph
             if gPrint:
                 me.sout(me, [[omega], False])
-            return [omega], False, config
+            return [omega], False
         
         newdivision = [] # Pour le 2nAGG
         newdivisionArg = [] # Pour les nTask
@@ -207,7 +207,7 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
         ############# PrintGraph
         if gPrint: 
             me.sout(me, [rep, False])
-        return rep, False, config
+        return rep, False
 
     # Sinon on augmente la granularité
 
@@ -217,7 +217,7 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
         ############# PrintGraph
         if gPrint:
             me.sout(me, [[omega], False])
-        return [omega], False, config
+        return [omega], False
     
     newdivision = [] # Pour le 2nAGG
     newdivisionArg = [] # Pour les nTask
