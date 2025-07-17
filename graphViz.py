@@ -66,14 +66,14 @@ class VizPrint:
             for _son in g.son:
                 son = _son[0]
                 data = _son[1]
-                self.Gr.node(son.id, son.type)
+                self.Gr.node(son.id, son.type, color = son.emphasis)
                 dataId = "i_" + son.id
                 self.Gr.node(dataId, data.__str__(), shape="box")
                 self.Gr.edge(g.id, dataId)
                 self.Gr.edge(dataId, son.id)
                 self.print1(son)
         if g.out[1] == None:
-            self.Gr.node(g.out[0].id, g.out[0].type)
+            self.Gr.node(g.out[0].id, g.out[0].type, color = g.out[0].emphasis)
             self.print1(g.out[0])
         else:
             data = g.out[1]
@@ -88,6 +88,6 @@ class VizPrint:
         return None
 
     def aff(self):
-        self.Gr.node(self.start.id, self.start.type)
+        self.Gr.node(self.start.id, self.start.type, color = self.start.emphasis)
         self.print1(self.start)
         self.Gr.render("graphic", format="pdf", view=True)

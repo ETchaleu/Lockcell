@@ -27,11 +27,14 @@ class IdGen():
 gen = IdGen()
     
 class Graph():
-    def __init__(self, obj = None):
+    def __init__(self, obj = None, emphas : Optional[str] = None):
         self.type = "ERR"
         self.id = gen.Gen().__str__()
         self.son = []
         self.up = []
+        self.emphasis = "black"
+        if emphas != None:
+            self.emphasis = emphas
         if obj != None:
             self.up = obj
         self.out : Tuple[Graph, Tuple[list, bool]] = (self, None) # type: ignore
@@ -47,6 +50,9 @@ class Graph():
     
     def sout(self, obj, data):
         self.out = (obj, data)
+    
+    def setEmphasis(self, color : str):
+        self.emphasis = color
     
     def __repr__(self) -> str:
         return f"Graph : {self.id}"
