@@ -34,7 +34,7 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True):
         ############# PrintGraph
         if gPrint:
             me.sout(me, ["Input", False])
-        return "Input", False, config
+        return "Input", False
 
     # Si le test fail
 
