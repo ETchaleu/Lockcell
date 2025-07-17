@@ -1,2 +1,2 @@
 Next updates incoming :
-- Redoundancy disappearing in Task
+- Implmentation of solution for distinguishing failing subsets
