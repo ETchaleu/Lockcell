@@ -1,2 +1,2 @@
 Next updates incoming :
-- Redoundancy disappearing in Task
+- gérer le traitement du nAnalyser
