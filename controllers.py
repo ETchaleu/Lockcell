@@ -12,6 +12,9 @@ from Tasks import nTask, TaskEnv
 from typing import List, Tuple, Optional
 import copy
 
+
+### GRAPH ###########################################################################
+
 class IdGen():
     def __init__(self) -> None:
         self.count = -1
@@ -46,6 +49,12 @@ class Graph():
     
     def __repr__(self) -> str:
         return f"Graph : {self.id}"
+    
+
+
+    
+    
+### TEST CONFIG #####################################################################
 
 class TestConfig(TaskEnv.Config):
     def __init__(self, *args, nbRun = None):
@@ -111,6 +120,11 @@ def GenCloseSet(N : int, size : int, ET : float):
     return val
             
 
+
+
+### CODE ###########################################################################""
+
+
 N = 2**10
 searchspace = [i for i in range(N)]
 
@@ -118,31 +132,31 @@ def dd_min(searchspace :list, config : TaskEnv.Config, graph : Optional[Graph] =
     return nTask.invoke(searchspace, 2, config, graph) # type: ignore
 
 def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, graph : Optional[Graph] = None):
-    with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
-        result = dd_min(searchspace, config, graph).wait().get() 
-        i = 1
-        tot = []
-        while result[1] == False:
-            # On retire les doublons
-            dic = {}
-            res = []
-            for key in result[0]:
-                if not (key.__str__() in dic):
-                    res.append(key)
-                    dic[key.__str__()] = True
-            # On transmet
-            if func != None:
-                func(res, i)
-            
-            #Ajout au total + réduction du searchspace, puis on relance un dd_min
-            tot.extend(res)
-            all = sum(result[0], [])
-            searchspace = TaskEnv.listminus(searchspace, all)
-            result = dd_min(searchspace, config).wait().get()
-            i += 1
-        if finalfunc != None:
-            finalfunc(tot, i)
-        return tot, i
+    #with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
+    result = dd_min(searchspace, config, graph).wait().get() 
+    i = 1
+    tot = []
+    while result[1] == False:
+        # On retire les doublons
+        dic = {}
+        res = []
+        for key in result[0]:
+            if not (key.__str__() in dic):
+                res.append(key)
+                dic[key.__str__()] = True
+        # On transmet
+        if func != None:
+            func(res, i)
+        
+        #Ajout au total + réduction du searchspace, puis on relance un dd_min
+        tot.extend(res)
+        all = sum(result[0], [])
+        searchspace = TaskEnv.listminus(searchspace, all)
+        result = dd_min(searchspace, config).wait().get()
+        i += 1
+    if finalfunc != None:
+        finalfunc(tot, i)
+    return tot, i
 
 def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config, graph : Optional[Graph] = None):
     #TODO: Preprocessing of nbRunTab
