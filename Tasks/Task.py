@@ -289,12 +289,16 @@ def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
 
 
     test = False
+    idxs = []
+    idx = 0
     for a in answers:
         if not a[1]:
             test = True
-            break
+            idxs.append(idx)
+        idx += 1
+
     
-    def merge(tabofrep): # Merge sans doublon
+    def degree(tabofanswers): # Merge sans doublon
         dic = {}
         res = []
         for rep in tabofrep:
@@ -308,10 +312,20 @@ def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
         return res
 
             
-
+    omega = sum(subdiv, [])
     if test: # Si l'un des complémentaire à fail, on retourne directe l'union des set de subset
-        rep = merge(answers)
-
+        rep = degree(answers)
+        
+        if len(idxs) == 1:
+            GrOut = None
+            ############# PrintGraph #############
+            if gPrint:
+                GrOut = Graph()
+            
+            Args = (TaskEnv.listminus(omega, subdiv[idxs[0]]), 2(n-1), config, GrOut, True)
+            return nTask()
+        else: # Si on n'arrive pas à déterminer le nombre de failing subset
+        
         ############# PrintGraph #############
         if gPrint: 
             me.sout(me, [rep, False])
@@ -319,7 +333,6 @@ def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
 
     # Sinon on augmente la granularité
 
-    omega = sum(subdiv, [])
     if len(omega) <= n: # Si granularité max on retourne le delta courant (omega)
 
         ############# PrintGraph #############

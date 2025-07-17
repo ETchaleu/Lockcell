@@ -42,6 +42,7 @@ def finalSay(res, i):
 # Problème d'implémentation de la stochasticité, en effet les 1 minimaux d'un période ne failent pas forcément à la suivanten il faut un cache ou alors transmette le fait que ce truc ne marche pas
 Viz = VizPrint()
 config = controllers.TestConfig()
+config.setMode("Analyse")
 config.GenProb(N, (2, 1, 0, 0.3), (2, 2, 2, 0.5), (1, 3, 4, 0.5)) # (combien, taille, écart type)
 nbRunTab = [1, 4, 6]
 print(config.Pb)
