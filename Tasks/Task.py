@@ -18,7 +18,7 @@ onArmoniK = False
 @task(active=onArmoniK)
 def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True, Result = None):
     
-    ############# PrintGraph #############
+    ### PrintGraph ###
     gPrint = (me != None)
     if gPrint:
         from controllers import Graph
@@ -26,7 +26,7 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True, Res
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}TASK : ".format(n) + delta.__str__()
 
-    # Si le resultat est déjà connu on ne teste 
+    # Si le resultat est déjà connu on ne teste pas
     test = None
     if Result == None:
         test = config.Test(delta)
@@ -36,13 +36,13 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True, Res
 
     if test: # Test le delta passé en param
 
-        ############# PrintGraph #############
+        ### PrintGraph ###
         if gPrint:
             me.sout(me, [None, True])
         return None, True
     
     if Recurse == False: # Si pas de récusivité
-        ############# PrintGraph #############
+        ### PrintGraph ###
         if gPrint:
             me.sout(me, ["Input", False])
         return "Input", False
@@ -52,7 +52,7 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True, Res
     # Si |Delta| = 1 on a fini
     if len(delta) == 1:
 
-        ############# PrintGraph #############
+        ### PrintGraph ###
         if gPrint:
             me.sout(me, [[delta], False])
         return [delta], False
@@ -63,12 +63,12 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True, Res
     subdivArg = [(delta, 2, config, Graph() if gPrint else None) for delta in subdiv] #Mise en forme pour le passage en paramètre
     GrOut = None
 
-    ############# PrintGraph #############
+    ### PrintGraph ###
     if gPrint:
         GrOut = Graph()
     result = nTask.map_invoke(subdivArg) #type: ignore
 
-    ############# PrintGraph #############
+    ### PrintGraph ###
     if gPrint:
         for i in subdivArg:
             me.down(i[3], i[0])
@@ -80,6 +80,9 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True, Res
 
     return nAGG.invoke(subdiv, result, n, config,  GrOut, delegate = True)#type: ignore
 
+
+
+
 #########################################################################################################
 ### NAGG
 #########################################################################################################
@@ -87,7 +90,7 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True, Res
 @task(active=onArmoniK)
 def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config :TaskEnv.Config, me):
 
-    ############# PrintGraph #############
+    ### PrintGraph ###
     gPrint = (me != None)
     if gPrint:
         from controllers import Graph
@@ -122,7 +125,7 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
     if test: # Si l'un des sets à fail, on retourne directe l'union des set de subset
         rep = merge(answers)
 
-        ############# PrintGraph #############
+        ### PrintGraph ###
         if gPrint:
             me.sout(me, [rep, False])
         return rep, False
@@ -132,7 +135,7 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
         omega = sum(subdiv, [])
         if len(omega) <= n:
 
-            ############# PrintGraph #############
+            ### PrintGraph ###
             if gPrint:
                 me.sout(me, [[omega], False])
             return [omega], False
@@ -155,7 +158,7 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
         result = nTask.map_invoke(newdivisionArg)#type: ignore
         GrOut = None
 
-        ############# PrintGraph #############
+        ### PrintGraph ###
         if gPrint:
             GrOut = Graph()
             for i in newdivisionArg:
@@ -172,7 +175,7 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
     #Sinon on teste les complémentaires, sans récursion pour traitement par le AGG2
     if config.mode == "Analyse":
 
-        ############# PrintGraph #############
+        ### PrintGraph ###
         if gPrint:
             me.setType(f"{n}Analyser - Up")
 
@@ -187,7 +190,7 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
     result = nTask.map_invoke(nablas)#type: ignore
     GrOut = None
 
-    ############# PrintGraph #############
+    ### PrintGraph ###
     if gPrint:
         GrOut = Graph()
         for i in nablas:
@@ -198,6 +201,10 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
     return next.invoke(subdiv, result, n, config, GrOut, delegate = True)#type: ignore
 
 
+
+
+
+
 #########################################################################################################
 ### NAGG2
 #########################################################################################################
@@ -205,7 +212,7 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
 @task(active=onArmoniK)
 def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config, me):
 
-    ############# PrintGraph #############
+    ### PrintGraph ###
     gPrint = (me != None)
     if gPrint:
         from controllers import Graph
@@ -239,7 +246,7 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
     if test: # Si l'un des complémentaire à fail, on retourne directe l'union des set de subset
         rep = merge(answers)
 
-        ############# PrintGraph #############
+        ### PrintGraph ###
         if gPrint: 
             me.sout(me, [rep, False])
         return rep, False
@@ -249,7 +256,7 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
     omega = sum(subdiv, [])
     if len(omega) <= n: # Si granularité max on retourne le delta courant (omega)
 
-        ############# PrintGraph #############
+        ### PrintGraph ###
         if gPrint:
             me.sout(me, [[omega], False])
         return [omega], False
@@ -271,7 +278,7 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
     result = nTask.map_invoke(newdivisionArg)#type: ignore
     GrOut = None
 
-    ############# PrintGraph #############
+    ### PrintGraph ###
     if gPrint:
         GrOut = Graph()
         for i in newdivisionArg:
@@ -281,6 +288,9 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
 
     return nAGG.invoke(newdivision, result, k, config, GrOut, delegate = True) # type: ignore
 
+
+
+
 #########################################################################################################
 ### NAnalyser
 #########################################################################################################
@@ -288,13 +298,13 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
 @task(active=onArmoniK)
 def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config, me):
 
-    ############# PrintGraph #############
+    ### PrintGraph ###
     gPrint = (me != None)
     if gPrint:
         from controllers import Graph
-        me.setType(f"nabla Analyser - {n}")
+        me.setType(f"{n}Analyser - Down")
     ### Ecriture des logs en mémoire
-    id = "PRGOUT : {}AGG2 : ".format(n) + subdiv.__str__()
+    id = "PRGOUT : {}Analyser - Down : ".format(n) + subdiv.__str__()
 
 
     test = False
@@ -306,45 +316,59 @@ def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
             idxs.append(idx)
         idx += 1
 
-    
-    def degree(tabofanswers): # Merge sans doublon
-        dic = {}
-        res = []
-        for rep in tabofrep:
-            if rep[0] == None:
-                continue
-            for val in rep[0]:
-                key = val.__str__()
-                if key not in dic:
-                    dic[key] = val
-                    res.append(val)
-        return res
-
             
-    omega = sum(subdiv, [])
-    if test: # Si l'un des complémentaire à fail, on retourne directe l'union des set de subset
-        rep = degree(answers)
-        
-        if len(idxs) == 1:
+    omega = sum(subdiv, []) # Utile pour faire tous les complémentaires etc
+
+
+    if test: ##### Si l'un des complémentaire à fail, on analyse
+
+
+        if False:
+            pass
+        else: # Si on n'arrive pas à déterminer le nombre de failing subset
+            ### PrintGraph ###
+            if gPrint:
+                me.setType(f"{n}Analyser - Down\nNo opti")
+                
+            # Est-on au niveau de découpage le plus fin
+            granularityMax = (len(omega) == n) 
+            if granularityMax and (len(idxs) == 1): #TODO: cf. preuve 
+                rep = [TaskEnv.listminus(omega, subdiv[idxs[0]])]
+                ### PrintGraph ###
+                if gPrint:
+                    me.sout(me, [rep, False])
+                return rep, False
+            
+            # On prépare les arguments pour chaque nabla qui bug, avec le nabla associé, la subdiv adaptée et on a déjà le resultat
+            Args = []
+            vals = [True for i in range(n)]
+            for idx in idxs:
+                vals[idx] = False
+            for idx in range(n):
+                k = min(2*(n-1), len(omega) - len(subdiv[idx]))
+                Args.append((TaskEnv.listminus(omega, subdiv[idx]), k, config, Graph() if gPrint else None, True, vals[idx]))
+            answers = nTask.map_invoke(Args)
+
             GrOut = None
-            ############# PrintGraph #############
+
+            ### PrintGraph ###
             if gPrint:
                 GrOut = Graph()
-            
-            Args = (TaskEnv.listminus(omega, subdiv[idxs[0]]), 2(n-1), config, GrOut, True)
-            return nTask()
-        else: # Si on n'arrive pas à déterminer le nombre de failing subset
-        
-        ############# PrintGraph #############
-        if gPrint: 
-            me.sout(me, [rep, False])
-        return rep, False
+                for i in Args:
+                    me.down(i[3], i[0])
+                    GrOut.sup(*i[3].out)
+                me.sout(GrOut, None)
+
+            return nAGG2.invoke(subdiv, answers, len(idxs), config, GrOut, delegate = True)#type: ignore
+
+
+
 
     # Sinon on augmente la granularité
 
     if len(omega) <= n: # Si granularité max on retourne le delta courant (omega)
 
-        ############# PrintGraph #############
+        ### PrintGraph ###
         if gPrint:
             me.sout(me, [[omega], False])
         return [omega], False
@@ -366,7 +390,7 @@ def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
     result = nTask.map_invoke(newdivisionArg)#type: ignore
     GrOut = None
 
-    ############# PrintGraph #############
+    ### PrintGraph ###
     if gPrint:
         GrOut = Graph()
         for i in newdivisionArg:

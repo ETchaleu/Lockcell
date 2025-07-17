@@ -11,6 +11,7 @@ from pymonik import Pymonik, MultiResultHandle
 from Tasks import nTask, TaskEnv
 from typing import List, Tuple, Optional
 import copy
+import time
 
 
 ### GRAPH ###########################################################################
@@ -52,7 +53,7 @@ class Graph():
     
 
 
-    
+
     
 ### TEST CONFIG #####################################################################
 
@@ -132,31 +133,33 @@ def dd_min(searchspace :list, config : TaskEnv.Config, graph : Optional[Graph] =
     return nTask.invoke(searchspace, 2, config, graph) # type: ignore
 
 def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, graph : Optional[Graph] = None):
-    #with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
-    result = dd_min(searchspace, config, graph).wait().get() 
-    i = 1
-    tot = []
-    while result[1] == False:
-        # On retire les doublons
-        dic = {}
-        res = []
-        for key in result[0]:
-            if not (key.__str__() in dic):
-                res.append(key)
-                dic[key.__str__()] = True
-        # On transmet
-        if func != None:
-            func(res, i)
-        
-        #Ajout au total + réduction du searchspace, puis on relance un dd_min
-        tot.extend(res)
-        all = sum(result[0], [])
-        searchspace = TaskEnv.listminus(searchspace, all)
-        result = dd_min(searchspace, config).wait().get()
-        i += 1
-    if finalfunc != None:
-        finalfunc(tot, i)
-    return tot, i
+    with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
+        start = time.time()
+        result = dd_min(searchspace, config, graph).wait().get() 
+        i = 1
+        tot = []
+        while result[1] == False:
+            # On retire les doublons
+            dic = {}
+            res = []
+            for key in result[0]:
+                if not (key.__str__() in dic):
+                    res.append(key)
+                    dic[key.__str__()] = True
+            # On transmet
+            if func != None:
+                func(res, i)
+            
+            #Ajout au total + réduction du searchspace, puis on relance un dd_min
+            tot.extend(res)
+            all = sum(result[0], [])
+            searchspace = TaskEnv.listminus(searchspace, all)
+            result = dd_min(searchspace, config).wait().get()
+            i += 1
+        if finalfunc != None:
+            finalfunc(tot, i)
+        stop = time.time()
+        return tot, i, (stop - start)
 
 def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config, graph : Optional[Graph] = None):
     #TODO: Preprocessing of nbRunTab
