@@ -14,7 +14,7 @@ from . import TaskEnv
 onArmoniK = False
 
 @task(active=onArmoniK)
-def nTask(delta : list, n : int, config :TaskEnv.Config, me):
+def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True):
     
     ############# PrintGraph
     gPrint = (me != None)
@@ -30,6 +30,12 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me):
             me.sout(me, [None, True])
         return None, True, config
     
+    if Recurse == False: # Si pas de récusivité
+        ############# PrintGraph
+        if gPrint:
+            me.sout(me, ["Input", False])
+        return "Input", False, config
+
     # Si le test fail
 
     # Si |Delta| = 1 on a fini
