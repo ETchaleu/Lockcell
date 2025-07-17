@@ -66,9 +66,10 @@ class VizPrint:
             for _son in g.son:
                 son = _son[0]
                 data = _son[1]
+                label = _son[2]
                 self.Gr.node(son.id, son.type, color = son.emphasis)
                 dataId = "i_" + son.id
-                self.Gr.node(dataId, data.__str__(), shape="box")
+                self.Gr.node(dataId, label + data.__str__(), shape="box")
                 self.Gr.edge(g.id, dataId)
                 self.Gr.edge(dataId, son.id)
                 self.print1(son)

@@ -30,7 +30,7 @@ class Graph():
     def __init__(self, obj = None, emphas : Optional[str] = None):
         self.type = "ERR"
         self.id = gen.Gen().__str__()
-        self.son = []
+        self.son : List[Tuple[Graph, Tuple[list, bool], str]] = []
         self.up = []
         self.emphasis = "black"
         if emphas != None:
@@ -41,12 +41,14 @@ class Graph():
 
     def setType(self, type :str):
         self.type = type
+    def addLabel(self, label :str):
+        self.type += "\n" + label
 
     def sup(self, obj, data):
         self.up.append((obj, data))
     
-    def down(self, obj, data):
-        self.son.append((obj, data))
+    def down(self, obj, data, label = ""):
+        self.son.append((obj, data, label))
     
     def sout(self, obj, data):
         self.out = (obj, data)
