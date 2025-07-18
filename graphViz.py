@@ -14,7 +14,7 @@ from controllers import Graph
 class VizPrint:
     def __init__(self):
         self.Gr = Digraph(format="svg")
-        self.Gr.graph_attr.update(size="20,20!", ratio="expand")
+        self.Gr.graph_attr.update(ratio="expand")
         self.Gr.attr(rankdir="TB")
         self.start = Graph()
         
