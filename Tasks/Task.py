@@ -11,7 +11,7 @@ import numpy as np
 from typing import List, Tuple, Optional
 from . import TaskEnv
 
-onArmoniK = True
+onArmoniK = False
 
 ### NTask
 
@@ -302,7 +302,7 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
     gPrint = (me != None)
     if gPrint:
         from controllers import Graph
-        me.setType(f"{n}Analyser - Test")
+        me.setType(f"{n}Analyser - Down")
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}Analyser - Down : ".format(n) + subdiv.__str__()
 
@@ -440,15 +440,20 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
 
 
 
-
+    
     # Sinon on augmente la granularité
 
     if len(omega) <= n: # Si granularité max on retourne le delta courant (omega)
 
         ### PrintGraph ###
         if gPrint:
+            me.addLabel("Granularity Max !")
             me.sout(me, [[omega], False])
         return [omega], False
+
+    ### PrintGraph ###
+    if gPrint:
+        me.addLabel("granularity up")
     
     newdivision = [] # Pour le 2nAGG
     newdivisionArg = [] # Pour les nTask
@@ -533,7 +538,7 @@ def nAnalyserDown(subdiv : List[list], answers : List[Tuple[List[list] | None, b
         return True
     
     omega = sum(subdiv, [])
-    if True: #isnull(matrix): # Only one failing subset (deg = 1)
+    if isnull(matrix): # Only one failing subset (deg = 1)
 
         # Launching calculus on the full intersection
         newDelta = omega
@@ -551,7 +556,53 @@ def nAnalyserDown(subdiv : List[list], answers : List[Tuple[List[list] | None, b
                 
         return nTask.invoke(newDelta, n-nb, config, GrOut, True, False, delegate=True)
         
-        
+    else:
+        #Sinon on simule une execution classique
+        #TODO: On peut faire bien mieux
+        Args = []
+        for idx in range(n): #Correspond à une n Task
+            nabla = TaskEnv.listminus(omega, subdiv[i])
+            Args.append((subdiv, "TODO", n, config, GrOut))
+
+            subdivArg = []
+            counter = 0
+            for i in range(n):
+                if i == idx:
+                    continue
+                nablaPrime = TaskEnv.listminus(nabla, subdiv[i])
+                rep = None
+                if not idx in lst:
+                    rep = True
+                else:
+                    rep = matrix[idx][counter]
+                    counter+=1 #### TODO: AAAAAAAAHHHHHHHHHHHHHHHHHHHH DESO JE VOULAIS FINIR, ca va être chiant à reprendre mais il faut globalement creer toutes les task
+                    #de l'étape n+2, ici on cree celles associées a la n ieme tache n+1 (on simule tout) Tschuusssss je vais à LR !
+                subdivArg.append((nablaPrime, n-1, config, Graph() if gPrint else None, True, rep)) #Mise en forme pour le passage en paramètre
+            
+            result = nTask.map_invoke(subdivArg) #type: ignore
+            for i in range(n):
+                if i == idx:
+                    continue
+                if not i in lst:
+                    result.append([None, True])
+                result.append()
+             GrOut = None
+            ### PrintGraph ###
+            if gPrint:
+                GrOut = Graph()
+
+            ### PrintGraph ###
+            if gPrint:
+                for i in subdivArg:
+                    me.down(i[3], i[0])
+                    out = i[3].out[0]
+                    while out != out.out[0]:
+                        out = out.out[0]
+                    GrOut.sup(*out.out)
+                me.sout(GrOut, None)
+
+            return Args.append((subdiv, result, n, config,  GrOut))
+
 
 
 
