@@ -172,7 +172,7 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
 
     next = nAGG2
     recursion = True
-    #Sinon on teste les complémentaires, sans récursion pour traitement par le AGG2
+    #Sinon on teste les complémentaires
     if config.mode == "Analyse":
 
         ### PrintGraph ###
@@ -349,12 +349,24 @@ def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
             tab = []
 
             #Création des Arguments pour tester les intersections
-            for i in range(n):
-                if vals[i] == False:
+            # TODO: Adapter pour que si le split en deux n'etait pas possible on le sache
+            bis = n // 2
+            for i in range(bis):
+                idx = 2*i
+                if vals[idx] == False:
                     tab.append([])
-                    for j in range(i+1, n):
+                    for j in range(idx+2, n):
                         if vals[j] == False:
-                            intersection = TaskEnv.listminus(omega, subdiv[i])
+                            intersection = TaskEnv.listminus(omega, subdiv[idx])
+                            intersection = TaskEnv.listminus(intersection, subdiv[j])
+                            Args.append((intersection, 2, config, Graph() if gPrint else None, False))
+                            tab[-1].append(j)
+                idx = 2*i + 1
+                if vals[idx] == False:
+                    tab.append([])
+                    for j in range(idx+1, n):
+                        if vals[j] == False:
+                            intersection = TaskEnv.listminus(omega, subdiv[idx])
                             intersection = TaskEnv.listminus(intersection, subdiv[j])
                             Args.append((intersection, 2, config, Graph() if gPrint else None, False))
                             tab[-1].append(j)
@@ -385,7 +397,8 @@ def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
             vals = [True for i in range(n)]
             for idx in idxs:
                 vals[idx] = False
-            for idx in range(n):
+            
+            for i in range(n):
                 k = min(n-1, len(omega) - len(subdiv[idx]))
                 Args.append((TaskEnv.listminus(omega, subdiv[idx]), k, config, Graph(emphas = "orange") if gPrint else None, True, vals[idx]))
             answers = nTask.map_invoke(Args)
