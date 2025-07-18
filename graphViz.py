@@ -100,4 +100,4 @@ class VizPrint:
     def aff(self):
         self.Gr.node(self.start.id, self.start.type, color = self.start.emphasis)
         self.print1(self.start)
-        self.Gr.render("graphic", format="svg", view=True)
+        self.Gr.render("graphic", format="svg", view=False)
