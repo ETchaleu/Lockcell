@@ -83,6 +83,8 @@ class VizPrint:
                 self.Gr.edge(dataId, son.id)
                 self.print1(son)
         if g.out[1] == None:
+            if len(g.son) == 1 and g.son[0][0] == g.out[0]:
+                return
             self.Gr.node(g.out[0].id, g.out[0].type, color = g.out[0].emphasis)
             self.print1(g.out[0])
         else:
