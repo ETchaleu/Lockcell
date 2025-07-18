@@ -14,7 +14,7 @@ cloudpickle.register_pickle_by_value(TaskEnv) # Pour les modules de ton code tu 
 cloudpickle.register_pickle_by_value(controllers) # Pour les modules de ton code tu fait du sort que ca soit pickler par value
 
 
-printgraph = True
+printgraph = False
 N = 2**6
 searchspace = [i for i in range(N)]
 

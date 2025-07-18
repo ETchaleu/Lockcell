@@ -11,7 +11,7 @@ import numpy as np
 from typing import List, Tuple, Optional
 from . import TaskEnv
 
-onArmoniK = False
+onArmoniK = True
 
 ### NTask
 
@@ -302,7 +302,7 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
     gPrint = (me != None)
     if gPrint:
         from controllers import Graph
-        me.setType(f"{n}Analyser - Down")
+        me.setType(f"{n}Analyser - Test")
     ### Ecriture des logs en mémoire
     id = "PRGOUT : {}Analyser - Down : ".format(n) + subdiv.__str__()
 
@@ -329,11 +329,29 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
             rep = [TaskEnv.listminus(omega, subdiv[idxs[0]])]
             ### PrintGraph ###
             if gPrint:
-                me.addLabel("One fail")
+                me.addLabel("Granularity Max !")
                 me.sout(me, [rep, False])
             return rep, False
+        
 
-        Achanger = False #TODO: Activation de l'analyse ou pas à retirer
+        if len(idxs) == 1: # Si un seul fail on recurse dessus
+            #On prépare les arguments
+            idx = idxs[0]
+            nabla = TaskEnv.listminus(omega, subdiv[idx])
+
+            GrOut = None
+            ### PrintGraph ### 
+            if gPrint:
+                me.addLabel("One fail")
+                GrOut = Graph(emphas= "orange")
+                me.down(GrOut, nabla)
+                me.sout(GrOut, None)
+
+            k = min(2*(n-1), len(nabla))
+            return nTask.invoke(nabla, k, config, GrOut, True, False, delegate=True)
+            
+
+        Achanger = True #TODO: Activation de l'analyse ou pas à retirer
         if Achanger: 
 
 
@@ -368,14 +386,14 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
                             Args.append((intersection, 2, config, Graph() if gPrint else None, False))
             
             #Building the conjugated tab
-            conjugate = [None for _ in range(n)] 
+            conjugate = [None for _ in range(n)]
             for i in range(bis):
-                if vals[2*i] == False and vals[2*i] == False:
+                if vals[2*i] == False and vals[2*i+1] == False:
                     conjugate[2*i] = 2*i + 1 # type: ignore
                     conjugate[2*i+1] = 2*i # type: ignore
                 else:
                     conjugate[2*i] = 2*i if not vals[2*i] else None # type: ignore
-                    conjugate[2*i + 1] = 2*i + 1 if not vals[2*i] else None # type: ignore
+                    conjugate[2*i + 1] = 2*i + 1 if not vals[2*i + 1] else None # type: ignore
                     
             
             
@@ -385,9 +403,9 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
             ### PrintGraph ###
             if gPrint:
                 GrOut = Graph()
-                for i in Args:
-                    me.down(i[3], i[0])
-                    GrOut.sup(*i[3].out)
+                for arg in Args:
+                    me.down(arg[3], arg[0])
+                    GrOut.sup(*arg[3].out)
                 me.sout(GrOut, None)
 
             return nAnalyserDown.invoke(subdiv, answers, conjugate, n, config, GrOut, delegate = True)
@@ -402,12 +420,10 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
             # On prépare les arguments pour chaque nabla qui bug, avec le nabla associé, la subdiv adaptée et on a déjà le resultat
             Args = []
             vals = [True for i in range(n)]
-            for idx in idxs:
-                vals[idx] = False
             
-            for i in range(n):
+            for idx in idxs:
                 k = min(n-1, len(omega) - len(subdiv[idx]))
-                Args.append((TaskEnv.listminus(omega, subdiv[idx]), k, config, Graph(emphas = "orange") if gPrint else None, True, vals[idx]))
+                Args.append((TaskEnv.listminus(omega, subdiv[idx]), k, config, Graph(emphas = "orange") if gPrint else None, True, False))
             answers = nTask.map_invoke(Args)
 
             GrOut = None
@@ -415,9 +431,9 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
             ### PrintGraph ###
             if gPrint:
                 GrOut = Graph()
-                for i in Args:
-                    me.down(i[3], i[0])
-                    GrOut.sup(*i[3].out)
+                for arg in Args:
+                    me.down(arg[3], arg[0])
+                    GrOut.sup(*arg[3].out)
                 me.sout(GrOut, None)
 
             return nAGG2.invoke(subdiv, answers, len(idxs), config, GrOut, delegate = True)#type: ignore
@@ -465,8 +481,81 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
 ### NAnalyser
 #########################################################################################################
 
+@task(active=onArmoniK)
 def nAnalyserDown(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], conj : List[Optional[int]], n : int, config : TaskEnv.Config, me):
-    #TODO: transform answers into matrix
-    #TODO: analyse the matrix
+
+    ### PrintGraph ###
+    gPrint = (me != None)
+    if gPrint:
+        from controllers import Graph
+        me.setType(f"{n}Analyser - Down")
+
+    ### Transform answers into matrix
+    lst = [i for (i, x) in enumerate(conj) if not (x is None)]
+    nb = len(lst)
+
+
+    matrix =[[True]*nb for _ in range(nb)]
+    for i in range(nb):
+        matrix[i][i] = False
+    
+    idx1 = 0
+    idx2 = 1
+    for anwser in answers: # On parcours les réponses comme si on parcourait une matrice triangulaire supérieur ligne par ligne (sans la diagonale)
+        if idx2 == idx1: # On saute les conjugués
+            idx2 += 1
+
+        if not anwser[1]:
+            matrix[idx1][idx2] = False
+            matrix[idx2][idx1] = False
+
+        idx2 += 1
+        if idx2 >= nb: # Si on est arrivés au bout on recommance ligne suivante
+            idx1 += 1
+            idx2 = idx1 + 1
+    
+
+            
+    ### Analysis of the matrix
+    def extractMatrix(tab):
+        size = len(tab)
+        rep = [[True]*size for _ in range(size)]
+        for i in range(size):
+            for j in range(size):
+                rep[i][j] = matrix[tab[i]][tab[j]]
+        return rep
+    
+    def isnull(mat):
+        for col in mat:
+            for elt in col:
+                if elt:
+                    return False
+        return True
+    
+    omega = sum(subdiv, [])
+    if True: #isnull(matrix): # Only one failing subset (deg = 1)
+
+        # Launching calculus on the full intersection
+        newDelta = omega
+        for idx in lst:
+            newDelta = TaskEnv.listminus(newDelta, subdiv[idx])
+        
+        GrOut = None
+
+        ### PrintGraph ###
+        if gPrint:
+            me.addLabel(f"One subset")
+            GrOut = Graph()
+            me.down(GrOut, newDelta)
+            me.sout(GrOut, None)
+                
+        return nTask.invoke(newDelta, n-nb, config, GrOut, True, False, delegate=True)
+        
+        
+
+
+
+
+
     #TODO: Launch calculus on the rest
     pass
