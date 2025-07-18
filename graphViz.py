@@ -13,7 +13,9 @@ from controllers import Graph
 
 class VizPrint:
     def __init__(self):
-        self.Gr = Digraph()
+        self.Gr = Digraph(format="svg")
+        self.Gr.graph_attr.update(size="20,20!", ratio="expand")
+        self.Gr.attr(rankdir="TB")
         self.start = Graph()
         
     def findOut(self, g : Graph) -> Graph:
@@ -98,4 +100,4 @@ class VizPrint:
     def aff(self):
         self.Gr.node(self.start.id, self.start.type, color = self.start.emphasis)
         self.print1(self.start)
-        self.Gr.render("graphic", format="pdf", view=True)
+        self.Gr.render("graphic", format="svg", view=True)
