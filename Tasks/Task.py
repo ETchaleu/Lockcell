@@ -8,7 +8,7 @@ Email    : erwan.tchale@gmail.com
 from pymonik import task
 
 import numpy as np
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from . import TaskEnv
 
 onArmoniK = False
@@ -16,7 +16,7 @@ onArmoniK = False
 ### NTask
 
 @task(active=onArmoniK)
-def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True, Result = None):
+def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True, Result: Optional[bool] = None):
     
     ### PrintGraph ###
     gPrint = (me != None)
@@ -88,7 +88,7 @@ def nTask(delta : list, n : int, config :TaskEnv.Config, me, Recurse = True, Res
 #########################################################################################################
 
 @task(active=onArmoniK)
-def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config :TaskEnv.Config, me):
+def nAGG(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], n : int, config :TaskEnv.Config, me):
 
     ### PrintGraph ###
     gPrint = (me != None)
@@ -210,7 +210,7 @@ def nAGG(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int,
 #########################################################################################################
 
 @task(active=onArmoniK)
-def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config, me):
+def nAGG2(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config, me):
 
     ### PrintGraph ###
     gPrint = (me != None)
@@ -296,7 +296,7 @@ def nAGG2(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int
 #########################################################################################################
 
 @task(active=onArmoniK)
-def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config, me):
+def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config, me):
 
     ### PrintGraph ###
     gPrint = (me != None)
@@ -346,7 +346,6 @@ def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
             vals = [True for i in range(n)]
             for idx in idxs:
                 vals[idx] = False
-            tab = []
 
             #Création des Arguments pour tester les intersections
             # TODO: Adapter pour que si le split en deux n'etait pas possible on le sache
@@ -354,22 +353,30 @@ def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
             for i in range(bis):
                 idx = 2*i
                 if vals[idx] == False:
-                    tab.append([])
                     for j in range(idx+2, n):
                         if vals[j] == False:
                             intersection = TaskEnv.listminus(omega, subdiv[idx])
                             intersection = TaskEnv.listminus(intersection, subdiv[j])
                             Args.append((intersection, 2, config, Graph() if gPrint else None, False))
-                            tab[-1].append(j)
+
                 idx = 2*i + 1
                 if vals[idx] == False:
-                    tab.append([])
                     for j in range(idx+1, n):
                         if vals[j] == False:
                             intersection = TaskEnv.listminus(omega, subdiv[idx])
                             intersection = TaskEnv.listminus(intersection, subdiv[j])
                             Args.append((intersection, 2, config, Graph() if gPrint else None, False))
-                            tab[-1].append(j)
+            
+            #Building the conjugated tab
+            conjugate = [None for _ in range(n)] 
+            for i in range(bis):
+                if vals[2*i] == False and vals[2*i] == False:
+                    conjugate[2*i] = 2*i + 1 # type: ignore
+                    conjugate[2*i+1] = 2*i # type: ignore
+                else:
+                    conjugate[2*i] = 2*i if not vals[2*i] else None # type: ignore
+                    conjugate[2*i + 1] = 2*i + 1 if not vals[2*i] else None # type: ignore
+                    
             
             
             answers = nTask.map_invoke(Args)
@@ -383,7 +390,7 @@ def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
                     GrOut.sup(*i[3].out)
                 me.sout(GrOut, None)
 
-            return nAnalyserDown.invoke(subdiv, answers, tab, n, config, GrOut, delegate = True)
+            return nAnalyserDown.invoke(subdiv, answers, conjugate, n, config, GrOut, delegate = True)
         
 
         else: # Pas de traitement
@@ -454,8 +461,12 @@ def nAnalyser(subdiv : list, answers : List[Tuple[List[list] | None, bool]], n :
 
     return nAGG.invoke(newdivision, result, k, config, GrOut, delegate = True) # type: ignore
 
-def nAnalyserDown(subdiv : list, answers : List[Tuple[List[list] | None, bool]], matrix, n : int, config : TaskEnv.Config, me):
-    #TODO: transform matrix into matrix
+#########################################################################################################
+### NAnalyser
+#########################################################################################################
+
+def nAnalyserDown(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], conj : List[Optional[int]], n : int, config : TaskEnv.Config, me):
+    #TODO: transform answers into matrix
     #TODO: analyse the matrix
     #TODO: Launch calculus on the rest
     pass
