@@ -7,7 +7,7 @@ Email    : erwan.tchale@gmail.com
 
 import controllers
 from Tasks import TaskEnv
-from graphViz import VizPrint
+from graphViz import MultiViz
 
 import cloudpickle # Install cloudpickle
 cloudpickle.register_pickle_by_value(TaskEnv) # Pour les modules de ton code tu fait du sort que ca soit pickler par value
@@ -39,20 +39,20 @@ def say2(res):
 def finalSay(res, i):
     print("\n" + "-"*80 +"\n" + "-"*80  + "\n" + "Recursions : " + i.__str__() + " | Total results : " + res.__str__()  +"\n" + "-"*80  +"\n" + "-"*80)
 
-# Problème d'implémentation de la stochasticité, en effet les 1 minimaux d'un période ne failent pas forcément à la suivanten il faut un cache ou alors transmette le fait que ce truc ne marche pas
-Viz = VizPrint()
-config = controllers.TestConfig([[[18], 0.3], [[22], 0.3], [[39, 40], 0.5], [[45, 47, 43], 0.5]])
+# Problème d'implémentation de la stochasticité, en effet les 1 minimaux d'un période ne failent pas forcément à la suivante il faut un cache ou alors transmette le fait que ce truc ne marche pas
+Viz = MultiViz(active=printgraph)
+config = controllers.TestConfig([[[18], 0.3], [[22], 0.3], [[39, 40], 0.5], [[44, 46], 0.5], [[45, 47, 43], 0.5]])
 config.setMode("Analyse")
 #config.GenProb(N, (2, 1, 0, 0.3), (1, 2, 2, 0.5), (1, 3, 4, 0.5)) # (combien, taille, écart type)
 nbRunTab = [1, 4, 6]
 print(config.Pb)
 input("press to continue...")
 #res = controllers.SRDDMIN(searchspace, nbRunTab, say2, config)
-res = controllers.RDDMIN(searchspace, say, finalSay, config, Viz.getGraph(printgraph))
+res = controllers.RDDMIN(searchspace, say, finalSay, config, Viz)
 print(res)
 print(config.Pb)
 
 if printgraph:
-    Viz.aff()
+    Viz.aff_all()
 
 

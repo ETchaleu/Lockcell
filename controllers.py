@@ -133,6 +133,8 @@ def GenCloseSet(N : int, size : int, ET : float):
 
 ### CODE ###########################################################################""
 
+from graphViz import MultiViz
+
 
 N = 2**10
 searchspace = [i for i in range(N)]
@@ -140,10 +142,10 @@ searchspace = [i for i in range(N)]
 def dd_min(searchspace :list, config : TaskEnv.Config, graph : Optional[Graph] = None):
     return nTask.invoke(searchspace, 2, config, graph) # type: ignore
 
-def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, graph : Optional[Graph] = None):
+def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, viz : Optional[MultiViz] = MultiViz()):
     with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
         start = time.time()
-        result = dd_min(searchspace, config, graph).wait().get() 
+        result = dd_min(searchspace, config, viz.newGraph()).wait().get() 
         i = 1
         tot = []
         while result[1] == False:
@@ -162,7 +164,7 @@ def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, graph :
             tot.extend(res)
             all = sum(result[0], [])
             searchspace = TaskEnv.listminus(searchspace, all)
-            result = dd_min(searchspace, config).wait().get()
+            result = dd_min(searchspace, config, viz.newGraph()).wait().get()
             i += 1
         if finalfunc != None:
             finalfunc(tot, i)

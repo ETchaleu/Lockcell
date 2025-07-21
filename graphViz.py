@@ -9,6 +9,32 @@ Email    : erwan.tchale@gmail.com
 
 from graphviz import Digraph
 from controllers import Graph
+from typing import List, Tuple, Optional
+
+
+class MultiViz:
+    def __init__(self, active :bool = False):
+        self.active : bool = active
+        self.graphs : List[VizPrint] = []
+
+    def newGraph(self, fake = False) -> Optional[Graph]:
+        self.graphs.append(VizPrint()) 
+        if fake:
+            return None
+        return self.graphs[-1].getGraph(self.active)
+    
+    def aff(self, i : int):
+        self.graphs[i].aff(i)
+
+    def __len__(self):
+        return len(self.graphs)
+    
+    def aff_all(self):
+        i = 0
+        for graph in self.graphs:
+            graph.aff(i)
+            i+=1
+
 
 
 class VizPrint:
@@ -99,7 +125,8 @@ class VizPrint:
             return self.start
         return None
 
-    def aff(self):
+    def aff(self, idx):
         self.Gr.node(self.start.id, self.start.type, color = self.start.emphasis)
         self.print1(self.start)
-        self.Gr.render("graphic", format="svg", view=False)
+        self.Gr.render(f"graphic{idx}", format="svg", view=False)
+    
