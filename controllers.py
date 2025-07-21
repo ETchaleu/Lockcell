@@ -142,7 +142,7 @@ searchspace = [i for i in range(N)]
 def dd_min(searchspace :list, config : TaskEnv.Config, graph : Optional[Graph] = None):
     return nTask.invoke(searchspace, 2, config, graph) # type: ignore
 
-def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, viz : Optional[MultiViz] = MultiViz()):
+def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, viz : MultiViz = MultiViz()):
     with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
         start = time.time()
         result = dd_min(searchspace, config, viz.newGraph()).wait().get() 
@@ -171,7 +171,7 @@ def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, viz : O
         stop = time.time()
         return tot, i, (stop - start)
 
-def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config, graph : Optional[Graph] = None):
+def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config, viz : MultiViz = MultiViz()):
     #TODO: Preprocessing of nbRunTab
 
     findback = {}
@@ -184,7 +184,7 @@ def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config,
         firstFail = False
         for run in nbRunTab:
             config.setNbRun(run)
-            result = dd_min(searchspace, config, graph).wait().get()
+            result = dd_min(searchspace, config, viz.newGraph()).wait().get()
             if result[1] == True:
                 continue
             while result[1] == False:
@@ -237,7 +237,7 @@ def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config,
                             done = True
                             continue
                     storeResult = storeResult.wait().get()
-                result = dd_min(searchspace, config).wait().get()
+                result = dd_min(searchspace, config, viz.newGraph()).wait().get()
         if firstFail:    
             return tot
         raise RuntimeError(f"SRDDMin : testing the subset {nbRunTab[-1]} times has never returned false")
