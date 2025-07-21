@@ -75,6 +75,8 @@ class TestConfig(TaskEnv.Config):
     
     def GenProb(self, N :int, *args): # TODO: faire en sorte que les ensembles ne se surperposent pas
         self.Pb = []
+        space = [i for i in range(N)]
+        curN = N
         if args:
             for (cle, nbr, et, p) in args:
                 try:
@@ -82,7 +84,15 @@ class TestConfig(TaskEnv.Config):
                     if cle_int <=0:
                         raise ValueError("Génération du problem set impossible, la taille de l'ensemble passée est négative")
                     for _ in range(cle):
-                        self.Pb.append([GenCloseSet(N, nbr, et), p])
+                        idxs = GenCloseSet(curN, nbr, et)
+                        elt = []
+                        for idx in sorted(idxs, reverse=True):
+                            elt.append(space[idx])
+                            del space[idx]
+
+                        self.Pb.append((elt, p))
+                        curN -= nbr
+
                 except ValueError as e:
                     raise ValueError("Erreur lors de la génération du problem set : conversion en entier | " + str(e))
         else:
@@ -109,17 +119,20 @@ class TestConfig(TaskEnv.Config):
         newCopy = TestConfig(self.Pb, self.nbRun)
         return newCopy
 
-def GenCloseSet(N : int, size : int, ET : float):
+def GenCloseSet(N : int, size : int, ET : float) -> List[int]:
+    if size > N:
+        raise RuntimeError(f"Cannot generate a {size} sized set in a {N} sized space")
     import numpy as np
     center = np.random.randint(0, N)
     val = [center]
     for _ in range(1, size):
         step = round(np.random.normal(loc = 0, scale = ET))
         center += step
+        center = max(0, min(center, N-1))
         i = 1
         while center in val:
-            up = min(center + i, N -1)
-            down = max(center - i, 0)
+            up = max(0, min(center + i, N -1))
+            down = min(max(center - i, 0), N-1)
             if up not in val:
                 center = up
             elif down not in val:
