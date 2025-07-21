@@ -15,7 +15,7 @@ cloudpickle.register_pickle_by_value(controllers) # Pour les modules de ton code
 
 
 printgraph = True
-N = 2**6
+N = 2**8
 searchspace = [i for i in range(N)]
 
 def counter(n : int):
@@ -41,9 +41,10 @@ def finalSay(res, i):
 
 # Problème d'implémentation de la stochasticité, en effet les 1 minimaux d'un période ne failent pas forcément à la suivante il faut un cache ou alors transmette le fait que ce truc ne marche pas
 Viz = MultiViz(active=printgraph)
-config = controllers.TestConfig([[[18], 0.3], [[22], 0.3], [[39, 40], 0.5], [[44, 46], 0.5], [[45, 47, 43], 0.5]])
-config.setMode("Analyse")
-#config.GenProb(N, (2, 1, 0, 0.3), (1, 2, 2, 0.5), (1, 3, 4, 0.5)) # (combien, taille, écart type)
+### config = controllers.TestConfig([[[56], 0.3], [[94], 0.3], [[42, 40], 0.5], [[118, 114, 115], 0.5], [[76, 80, 82], 0.5]]) EXCELLENT EXEMPLE avec N = 2**7
+config = controllers.TestConfig([[[56], 0.3], [[94], 0.3], [[42, 40], 0.5], [[118, 114, 115], 0.5], [[76, 80, 82], 0.5]])
+config.setMode("Analysez")
+#config.GenProb(N, (2, 1, 0, 0.3), (1, 2, 2, 0.5), (2, 3, 4, 0.5)) # (combien, taille, écart type)
 nbRunTab = [1, 4, 6]
 print(config.Pb)
 input("press to continue...")

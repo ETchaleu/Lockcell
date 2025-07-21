@@ -5,7 +5,7 @@ Email    : erwan.tchale@gmail.com
 
 """
 
-from pymonik import task
+from pymonik import task, MultiResultHandle
 
 import numpy as np
 from typing import List, Tuple, Optional
@@ -329,6 +329,7 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
             rep = [TaskEnv.listminus(omega, subdiv[idxs[0]])]
             ### PrintGraph ###
             if gPrint:
+                me.addLabel("One fail")
                 me.addLabel("Granularity Max !")
                 me.sout(me, [rep, False])
             return rep, False
@@ -500,29 +501,38 @@ def nAnalyserDown(subdiv : List[list], answers : List[Tuple[List[list] | None, b
     nb = len(lst)
 
 
-    matrix =[[True]*nb for _ in range(nb)]
+    matrix =[[True]*n for _ in range(n)]
     for i in range(nb):
-        matrix[i][i] = False
+        matrix[lst[i]][lst[i]] = False
     
     idx1 = 0
     idx2 = 1
     for anwser in answers: # On parcours les réponses comme si on parcourait une matrice triangulaire supérieur ligne par ligne (sans la diagonale)
-        if idx2 == idx1: # On saute les conjugués
+        if conj[lst[idx1]] == lst[idx2]: # On saute les conjugués
             idx2 += 1
 
         if not anwser[1]:
-            matrix[idx1][idx2] = False
-            matrix[idx2][idx1] = False
+            matrix[lst[idx1]][lst[idx2]] = False
+            matrix[lst[idx2]][lst[idx1]] = False
 
         idx2 += 1
         if idx2 >= nb: # Si on est arrivés au bout on recommance ligne suivante
             idx1 += 1
             idx2 = idx1 + 1
     
-
+    """import copy
+    pri = copy.deepcopy(matrix)
+    for i in range(n):
+        for j in range(n):
+            if pri[i][j]:
+                pri[i][j] = 0
+            else:
+                pri[i][j] = 'X'
+    for col in pri:
+        print(col)"""
             
     ### Analysis of the matrix
-    def extractMatrix(tab):
+    def extractMatrix(tab): # extract the square matrix with the indexes given by tab
         size = len(tab)
         rep = [[True]*size for _ in range(size)]
         for i in range(size):
@@ -530,7 +540,7 @@ def nAnalyserDown(subdiv : List[list], answers : List[Tuple[List[list] | None, b
                 rep[i][j] = matrix[tab[i]][tab[j]]
         return rep
     
-    def isnull(mat):
+    def isnull(mat): # Checks if a matrix is null
         for col in mat:
             for elt in col:
                 if elt:
@@ -538,7 +548,11 @@ def nAnalyserDown(subdiv : List[list], answers : List[Tuple[List[list] | None, b
         return True
     
     omega = sum(subdiv, [])
-    if isnull(matrix): # Only one failing subset (deg = 1)
+
+
+
+    ### If only one failing subset (deg = 1) #########################################################################
+    if isnull(extractMatrix(lst)):
 
         # Launching calculus on the full intersection
         newDelta = omega
@@ -555,58 +569,79 @@ def nAnalyserDown(subdiv : List[list], answers : List[Tuple[List[list] | None, b
             me.sout(GrOut, None)
                 
         return nTask.invoke(newDelta, n-nb, config, GrOut, True, False, delegate=True)
-        
-    else:
-        #Sinon on simule une execution classique
-        #TODO: On peut faire bien mieux
-        Args = []
-        for idx in range(n): #Correspond à une n Task
-            nabla = TaskEnv.listminus(omega, subdiv[i])
-            Args.append((subdiv, "TODO", n, config, GrOut))
+    
 
+    
+    ### Sinon on simule une execution classique ######################################################################
+    else:
+
+
+        #TODO: On peut faire bien mieux
+        results = []
+        fakesons = []
+        for idx in range(n): #Correspond à une n-1 Task
+            nabla = TaskEnv.listminus(omega, subdiv[idx])
+            if not idx in lst: # Si c'est un tache qui ne fail pas, on la génère simplement
+                results.append(nTask.invoke(nabla, n-1, config, Graph(emphas="orange"), False, True))
+                continue
+            
+                
             subdivArg = []
-            counter = 0
+            newSubdiv = []
+            graphs = []
             for i in range(n):
                 if i == idx:
                     continue
                 nablaPrime = TaskEnv.listminus(nabla, subdiv[i])
-                rep = None
-                if not idx in lst:
-                    rep = True
-                else:
-                    rep = matrix[idx][counter]
-                    counter+=1 #### TODO: AAAAAAAAHHHHHHHHHHHHHHHHHHHH DESO JE VOULAIS FINIR, ca va être chiant à reprendre mais il faut globalement creer toutes les task
-                    #de l'étape n+2, ici on cree celles associées a la n ieme tache n+1 (on simule tout) Tschuusssss je vais à LR !
-                subdivArg.append((nablaPrime, n-1, config, Graph() if gPrint else None, True, rep)) #Mise en forme pour le passage en paramètre
+                newSubdiv.append(subdiv[i])
+                rep = matrix[idx][i]
+                ### PrintGraph ###
+                if gPrint:
+                    graphs.append(Graph(emphas="orange"))
+                subdivArg.append((nablaPrime, n-2, config, graphs[-1] if gPrint else None, True, rep)) #Mise en forme pour le passage en paramètre
             
             result = nTask.map_invoke(subdivArg) #type: ignore
-            for i in range(n):
-                if i == idx:
-                    continue
-                if not i in lst:
-                    result.append([None, True])
-                result.append()
-             GrOut = None
-            ### PrintGraph ###
-            if gPrint:
-                GrOut = Graph()
+
+            fakeMother = None
 
             ### PrintGraph ###
             if gPrint:
+                fakeMother = Graph(emphas="orange")
+                fakeMother.setType(f"{n-1}Task")
+                me.down(fakeMother, nabla)
+                fakesons.append(fakeMother)
+
+
+            GrOut1 = None
+
+            ### PrintGraph ###
+            if gPrint:
+                GrOut1 = Graph()
+                
                 for i in subdivArg:
-                    me.down(i[3], i[0])
+                    fakeMother.down(i[3], i[0])
                     out = i[3].out[0]
                     while out != out.out[0]:
                         out = out.out[0]
-                    GrOut.sup(*out.out)
-                me.sout(GrOut, None)
+                    GrOut1.sup(*out.out)
+                fakeMother.sout(GrOut1, None)
 
-            return Args.append((subdiv, result, n, config,  GrOut))
-
-
-
+            results.append(nAGG.invoke(newSubdiv, result, n, config, GrOut1))
+        
 
 
+        ## On a récupéré les données des n-1 task et on lance donc un n aggregateur pour sortir la réponse
+        GrOut = None
 
-    #TODO: Launch calculus on the rest
-    pass
+        ### PrintGraph ###
+        if gPrint:
+            GrOut = Graph()
+            
+            for i in fakesons:
+                out = i.out[0]
+                while out != out.out[0]:
+                    out = out.out[0]
+                GrOut.sup(*out.out)
+            me.sout(GrOut, None)
+        results = MultiResultHandle(results)
+        return nAGG.invoke(subdiv, results, n, config, GrOut)
