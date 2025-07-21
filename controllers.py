@@ -11,6 +11,10 @@ from pymonik import Pymonik, MultiResultHandle
 from Tasks import nTask, TaskEnv
 from typing import List, Tuple, Optional
 import copy
+import time
+
+
+### GRAPH ###########################################################################
 
 class IdGen():
     def __init__(self) -> None:
@@ -23,29 +27,43 @@ class IdGen():
 gen = IdGen()
     
 class Graph():
-    def __init__(self, obj = None):
+    def __init__(self, obj = None, emphas : Optional[str] = None):
         self.type = "ERR"
         self.id = gen.Gen().__str__()
-        self.son = []
+        self.son : List[Tuple[Graph, Tuple[list, bool], str]] = []
         self.up = []
+        self.emphasis = "black"
+        if emphas != None:
+            self.emphasis = emphas
         if obj != None:
             self.up = obj
         self.out : Tuple[Graph, Tuple[list, bool]] = (self, None) # type: ignore
 
     def setType(self, type :str):
         self.type = type
+    def addLabel(self, label :str):
+        self.type += "\n" + label
 
     def sup(self, obj, data):
         self.up.append((obj, data))
     
-    def down(self, obj, data):
-        self.son.append((obj, data))
+    def down(self, obj, data, label = ""):
+        self.son.append((obj, data, label))
     
     def sout(self, obj, data):
         self.out = (obj, data)
     
+    def setEmphasis(self, color : str):
+        self.emphasis = color
+    
     def __repr__(self) -> str:
         return f"Graph : {self.id}"
+    
+
+
+
+    
+### TEST CONFIG #####################################################################
 
 class TestConfig(TaskEnv.Config):
     def __init__(self, *args, nbRun = None):
@@ -111,15 +129,23 @@ def GenCloseSet(N : int, size : int, ET : float):
     return val
             
 
+
+
+### CODE ###########################################################################""
+
+from graphViz import MultiViz
+
+
 N = 2**10
 searchspace = [i for i in range(N)]
 
 def dd_min(searchspace :list, config : TaskEnv.Config, graph : Optional[Graph] = None):
     return nTask.invoke(searchspace, 2, config, graph) # type: ignore
 
-def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, graph : Optional[Graph] = None):
+def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, viz : MultiViz = MultiViz()):
     with Pymonik(endpoint="172.29.94.180:5001", environment={"pip":["numpy"]}):
-        result = dd_min(searchspace, config, graph).wait().get() 
+        start = time.time()
+        result = dd_min(searchspace, config, viz.newGraph()).wait().get() 
         i = 1
         tot = []
         while result[1] == False:
@@ -138,13 +164,14 @@ def RDDMIN(searchspace : list, func, finalfunc, config : TaskEnv.Config, graph :
             tot.extend(res)
             all = sum(result[0], [])
             searchspace = TaskEnv.listminus(searchspace, all)
-            result = dd_min(searchspace, config).wait().get()
+            result = dd_min(searchspace, config, viz.newGraph()).wait().get()
             i += 1
         if finalfunc != None:
             finalfunc(tot, i)
-        return tot, i
+        stop = time.time()
+        return tot, i, (stop - start)
 
-def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config, graph : Optional[Graph] = None):
+def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config, viz : MultiViz = MultiViz()):
     #TODO: Preprocessing of nbRunTab
 
     findback = {}
@@ -157,7 +184,7 @@ def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config,
         firstFail = False
         for run in nbRunTab:
             config.setNbRun(run)
-            result = dd_min(searchspace, config, graph).wait().get()
+            result = dd_min(searchspace, config, viz.newGraph()).wait().get()
             if result[1] == True:
                 continue
             while result[1] == False:
@@ -210,7 +237,7 @@ def SRDDMIN(searchspace : list, nbRunTab : list, found, config : TaskEnv.Config,
                             done = True
                             continue
                     storeResult = storeResult.wait().get()
-                result = dd_min(searchspace, config).wait().get()
+                result = dd_min(searchspace, config, viz.newGraph()).wait().get()
         if firstFail:    
             return tot
         raise RuntimeError(f"SRDDMin : testing the subset {nbRunTab[-1]} times has never returned false")

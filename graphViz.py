@@ -1,12 +1,47 @@
+"""
+Created on : 2025-07-17
+Author   : Erwan Tchaleu
+Email    : erwan.tchale@gmail.com
+
+"""
+
 ### AFFICHAGE DU GRAPHE DES TÂCHES
 
 from graphviz import Digraph
 from controllers import Graph
+from typing import List, Tuple, Optional
+
+
+class MultiViz:
+    def __init__(self, active :bool = False):
+        self.active : bool = active
+        self.graphs : List[VizPrint] = []
+
+    def newGraph(self, fake = False) -> Optional[Graph]:
+        self.graphs.append(VizPrint()) 
+        if fake:
+            return None
+        return self.graphs[-1].getGraph(self.active)
+    
+    def aff(self, i : int):
+        self.graphs[i].aff(i)
+
+    def __len__(self):
+        return len(self.graphs)
+    
+    def aff_all(self):
+        i = 0
+        for graph in self.graphs:
+            graph.aff(i)
+            i+=1
+
 
 
 class VizPrint:
     def __init__(self):
-        self.Gr = Digraph()
+        self.Gr = Digraph(format="svg")
+        self.Gr.graph_attr.update(ratio="expand")
+        self.Gr.attr(rankdir="TB")
         self.start = Graph()
         
     def findOut(self, g : Graph) -> Graph:
@@ -66,14 +101,17 @@ class VizPrint:
             for _son in g.son:
                 son = _son[0]
                 data = _son[1]
-                self.Gr.node(son.id, son.type)
+                label = _son[2]
+                self.Gr.node(son.id, son.type, color = son.emphasis)
                 dataId = "i_" + son.id
-                self.Gr.node(dataId, data.__str__(), shape="box")
+                self.Gr.node(dataId, label + data.__str__(), shape="box")
                 self.Gr.edge(g.id, dataId)
                 self.Gr.edge(dataId, son.id)
                 self.print1(son)
         if g.out[1] == None:
-            self.Gr.node(g.out[0].id, g.out[0].type)
+            if len(g.son) == 1 and g.son[0][0] == g.out[0]:
+                return
+            self.Gr.node(g.out[0].id, g.out[0].type, color = g.out[0].emphasis)
             self.print1(g.out[0])
         else:
             data = g.out[1]
@@ -87,7 +125,8 @@ class VizPrint:
             return self.start
         return None
 
-    def aff(self):
-        self.Gr.node(self.start.id, self.start.type)
+    def aff(self, idx):
+        self.Gr.node(self.start.id, self.start.type, color = self.start.emphasis)
         self.print1(self.start)
-        self.Gr.render("graphic", format="pdf", view=True)
+        self.Gr.render(f"graphic{idx}", format="svg", view=False)
+    
