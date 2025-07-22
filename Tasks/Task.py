@@ -673,7 +673,7 @@ def nAnalyserDown(subdiv : List[list], answers : List[Tuple[List[list] | None, b
                 newdivision.append(temp[0])
                 newdivision.append(temp[1])
                 idx_ += 2
-        res =  MultiResultHandle([nTask.invoke(newDelta, newdivision, config, Gr1, True, None, oneSub, delegate=True)])
+        res =  MultiResultHandle([nTask.invoke(newDelta, newdivision, config, Gr1, True, None, oneSub)])
         
         GrOut = None
 
