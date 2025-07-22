@@ -16,7 +16,7 @@ onArmoniK = False
 ### NTask
 
 @task(active=onArmoniK)
-def nTask(delta : list, n : Union[int, List[list]], config :TaskEnv.Config, me, Recurse = True, Result: Optional[bool] = None):
+def nTask(delta : list, n : Union[int, List[list]], config :TaskEnv.Config, me, Recurse = True, Result: Optional[bool] = None, oneSub : List[int] = []):
     
     ### PrintGraph ###
     gPrint = (me != None)
@@ -73,8 +73,13 @@ def nTask(delta : list, n : Union[int, List[list]], config :TaskEnv.Config, me, 
 
     ### PrintGraph ###
     if gPrint:
+        counter = 0
         for i in subdivArg:
-            me.down(i[3], i[0])
+            if counter in oneSub:
+                me.down(i[3], i[0], "o")
+            else:
+                me.down(i[3], i[0])
+            counter += 1
             out = i[3].out[0]
             while out != out.out[0]:
                 out = out.out[0]
@@ -82,7 +87,8 @@ def nTask(delta : list, n : Union[int, List[list]], config :TaskEnv.Config, me, 
         me.sout(GrOut, None)
     if isinstance(n, list):
         n = len(n)
-    return nAGG.invoke(subdiv, result, n, config,  GrOut, delegate = True)#type: ignore
+        
+    return nAGG.invoke(subdiv, result, n, config,  GrOut, oneSub, delegate = True)#type: ignore
 
 
 
@@ -92,7 +98,7 @@ def nTask(delta : list, n : Union[int, List[list]], config :TaskEnv.Config, me, 
 #########################################################################################################
 
 @task(active=onArmoniK)
-def nAGG(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], n : int, config :TaskEnv.Config, me):
+def nAGG(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], n : int, config :TaskEnv.Config, me, oneSub : List[int] = []):
 
     ### PrintGraph ###
     gPrint = (me != None)
@@ -159,7 +165,7 @@ def nAGG(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], n 
                 newdivisionArg.append((delta, 2, config, Graph() if gPrint else None))
                 newdivision.append(delta)
             
-        result = nTask.map_invoke(newdivisionArg)#type: ignore
+        result = nTask.map_invoke(newdivisionArg) #type: ignore
         GrOut = None
 
         ### PrintGraph ###
@@ -170,7 +176,7 @@ def nAGG(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], n 
                 GrOut.sup(*i[3].out)
             me.sout(GrOut, None)
 
-        return nAGG.invoke(newdivision, result, k, config, GrOut, delegate = True)#type: ignore
+        return nAGG.invoke(newdivision, result, k, config, GrOut, delegate = True) #type: ignore
     
     
 
@@ -197,12 +203,17 @@ def nAGG(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], n 
     ### PrintGraph ###
     if gPrint:
         GrOut = Graph()
+        counter = 0
         for i in nablas:
-            me.down(i[3], i[0])
+            if counter in oneSub:
+                me.down(i[3], i[0], "o")
+            else:
+                me.down(i[3], i[0])
+            counter += 1
             GrOut.sup(*i[3].out)
         me.sout(GrOut, None)
     
-    return next.invoke(subdiv, result, n, config, GrOut, delegate = True)#type: ignore
+    return next.invoke(subdiv, result, n, config, GrOut, oneSub, delegate = True)#type: ignore
 
 
 
@@ -214,7 +225,7 @@ def nAGG(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], n 
 #########################################################################################################
 
 @task(active=onArmoniK)
-def nAGG2(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config, me):
+def nAGG2(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config, me, oneSub : List[int] = []):
 
     ### PrintGraph ###
     gPrint = (me != None)
@@ -300,7 +311,7 @@ def nAGG2(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], n
 #########################################################################################################
 
 @task(active=onArmoniK)
-def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config, me):
+def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]], n : int, config : TaskEnv.Config, me, oneSub : List[int] = []):
 
     ### PrintGraph ###
     gPrint = (me != None)
@@ -351,16 +362,23 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
                 GrOut = Graph(emphas= "orange")
                 me.down(GrOut, nabla)
                 me.sout(GrOut, None)
+                
             newdivision = []
+            oneSub = []
+            idx_ = 0
             for div in subdiv:
+                if div == subdiv[idx]:
+                    continue
                 if len(div) == 1:
                     newdivision.append(div)
+                    oneSub.append(idx_)
+                    idx_ += 1
                 else:
                     temp = TaskEnv.split(div, 2)
                     newdivision.append(temp[0])
                     newdivision.append(temp[1])
-            return nTask.invoke(nabla, newdivision, config, GrOut, True, False, delegate=True)
-            
+                    idx_ += 2
+            return nTask.invoke(nabla, newdivision, config, GrOut, True, False, oneSub, delegate=True)
 
         Achanger = True #TODO: Activation de l'analyse ou pas à retirer
         if Achanger: 
@@ -378,35 +396,47 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
 
             #Création des Arguments pour tester les intersections
             # TODO: Adapter pour que si le split en deux n'etait pas possible on le sache
-            bis = n // 2
-            for i in range(bis):
-                idx = 2*i
+            idx = 0
+            while idx < n:
+                if idx in oneSub:
+                    if vals[idx] == False:
+                        for j in range(idx+1, n):
+                            if vals[j] == False:
+                                intersection = TaskEnv.listminus(omega, subdiv[idx])
+                                intersection = TaskEnv.listminus(intersection, subdiv[j])
+                                Args.append((intersection, 2, config, Graph() if gPrint else None, False))
+                    idx += 1
+                    continue
                 if vals[idx] == False:
                     for j in range(idx+2, n):
                         if vals[j] == False:
                             intersection = TaskEnv.listminus(omega, subdiv[idx])
                             intersection = TaskEnv.listminus(intersection, subdiv[j])
                             Args.append((intersection, 2, config, Graph() if gPrint else None, False))
-
-                idx = 2*i + 1
+                idx += 1
                 if vals[idx] == False:
                     for j in range(idx+1, n):
                         if vals[j] == False:
                             intersection = TaskEnv.listminus(omega, subdiv[idx])
                             intersection = TaskEnv.listminus(intersection, subdiv[j])
                             Args.append((intersection, 2, config, Graph() if gPrint else None, False))
+                idx += 1
             
             #Building the conjugated tab
             conjugate = [None for _ in range(n)]
-            for i in range(bis):
-                if vals[2*i] == False and vals[2*i+1] == False:
-                    conjugate[2*i] = 2*i + 1 # type: ignore
-                    conjugate[2*i+1] = 2*i # type: ignore
+            idx = 0
+            while idx < n:
+                if idx in oneSub:
+                    conjugate[idx] = idx if not vals[idx] else None # type: ignore
+                    idx += 1
+                    continue
+                if vals[idx] == False and vals[idx+1] == False:
+                    conjugate[idx] = idx + 1 # type: ignore
+                    conjugate[idx+1] = idx # type: ignore
                 else:
-                    conjugate[2*i] = 2*i if not vals[2*i] else None # type: ignore
-                    conjugate[2*i + 1] = 2*i + 1 if not vals[2*i + 1] else None # type: ignore
-            if n % 2 != 0:
-                conjugate[n-1] = n-1 if not vals[n-1] else None# type: ignore
+                    conjugate[idx] = idx if not vals[idx] else None # type: ignore
+                    conjugate[idx + 1] = idx + 1 if not vals[idx + 1] else None # type: ignore
+                idx += 2
             
             
             Nanswers = nTask.map_invoke(Args)
@@ -471,6 +501,8 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
     newdivisionArg = [] # Pour les nTask
 
     k = min(2*n, len(omega))
+    oneSub = []
+    idx = 0
     for delta in subdiv: # Mise en forme des lis
         if len(delta) >= 2:
             temp = TaskEnv.split(delta, 2)
@@ -478,9 +510,12 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
             newdivisionArg.append((temp[1], 2, config, Graph() if gPrint else None))
             newdivision.append(temp[0])
             newdivision.append(temp[1])
+            idx += 2
         else :
             newdivisionArg.append((delta, 2, config, Graph() if gPrint else None))
             newdivision.append(delta)
+            oneSub.append(idx)
+            idx += 1
     result = nTask.map_invoke(newdivisionArg)#type: ignore
     GrOut = None
 
@@ -492,10 +527,10 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
             GrOut.sup(*i[3].out)
         me.sout(GrOut, None)
 
-    return nAGG.invoke(newdivision, result, k, config, GrOut, delegate = True) # type: ignore
+    return nAGG.invoke(newdivision, result, k, config, GrOut, oneSub, delegate = True) # type: ignore
 
 #########################################################################################################
-### NAnalyser
+### NAnalyserDown
 #########################################################################################################
 
 @task(active=onArmoniK)
@@ -516,20 +551,8 @@ def nAnalyserDown(subdiv : List[list], answers : List[Tuple[List[list] | None, b
     matrix : List[List[bool]] =[[True]*n for _ in range(n)]
     for i in range(nb):
         matrix[lst[i]][lst[i]] = False
-    if nb == 1:
-        print(lst)
-        import copy
-        pri = copy.deepcopy(matrix)
-        for i in range(n):
-            for j in range(n):
-                if pri[i][j]:
-                    pri[i][j] = 0
-                else:
-                    pri[i][j] = 'X'
-        for col in pri:
-            print(col)
-                
-        raise RuntimeError("BUGG")
+    if nb == 1:             
+        raise RuntimeError("AnalyserDown called with only one failing subset (Should have directly recurse)")
 
     
     idx1 = 0
@@ -636,16 +659,21 @@ def nAnalyserDown(subdiv : List[list], answers : List[Tuple[List[list] | None, b
         
         Gr1 = Graph() if gPrint else None
         newdivision = []
+        oneSub = []
+        idx_ = 0
         for idx in range(n):
             if idx in lst:
                 continue
             if len(subdiv[idx]) == 1:
                 newdivision.append(subdiv[idx])
+                oneSub.append(idx_)
+                idx_ += 1
             else:
                 temp = TaskEnv.split(subdiv[idx], 2)
                 newdivision.append(temp[0])
                 newdivision.append(temp[1])
-        res =  MultiResultHandle([nTask.invoke(newDelta, newdivision, config, Gr1, True, delegate=True)])
+                idx_ += 2
+        res =  MultiResultHandle([nTask.invoke(newDelta, newdivision, config, Gr1, True, None, oneSub, delegate=True)])
         
         GrOut = None
 
@@ -690,28 +718,37 @@ def nAnalyserDown(subdiv : List[list], answers : List[Tuple[List[list] | None, b
         Gr2 = Graph() if gPrint else None
 
         newdivision1 = []
+        oneSub1 = []
+        idx_1 = 0
         for idx in range(n):
             if idx in tab1:
                 continue
             if len(subdiv[idx]) == 1:
                 newdivision1.append(subdiv[idx])
+                oneSub1.append(idx_1)
+                idx_1 += 1
             else:
                 temp = TaskEnv.split(subdiv[idx], 2)
                 newdivision1.append(temp[0])
                 newdivision1.append(temp[1])
+                idx_1 += 2
         newdivision2 = []
+        oneSub2 = []
+        idx_2 = 0
         for idx in range(n):
             if idx in tab2:
                 continue
             if len(subdiv[idx]) == 1:
                 newdivision2.append(subdiv[idx])
+                oneSub2.append(idx_2)
+                idx_2 += 1
             else:
                 temp = TaskEnv.split(subdiv[idx], 2)
                 newdivision2.append(temp[0])
                 newdivision2.append(temp[1])
-
+                idx_2 += 2
         
-        Args = [(NewNabla1, newdivision1, config, Gr1), (NewNabla2, newdivision2, config, Gr2)]
+        Args = [(NewNabla1, newdivision1, config, Gr1, True, None, oneSub1), (NewNabla2, newdivision2, config, Gr2, True , None, oneSub2)]
         res = nTask.map_invoke(Args)
         GrOut = None
 
@@ -762,7 +799,14 @@ def nAnalyserDown(subdiv : List[list], answers : List[Tuple[List[list] | None, b
                 ### PrintGraph ###
                 if gPrint:
                     graphs.append(Graph(emphas="orange"))
-                subdivArg.append((nablaPrime, n-2, config, graphs[-1] if gPrint else None, True, rep)) #Mise en forme pour le passage en paramètre
+                newdivision = []
+                for j in range(n):
+                    if j==idx:
+                        continue
+                    if j==i:
+                        continue
+                    newdivision.append(subdiv[j])
+                subdivArg.append((nablaPrime, newdivision, config, graphs[-1] if gPrint else None, True, rep)) #Mise en forme pour le passage en paramètre
             
             result = nTask.map_invoke(subdivArg) #type: ignore
 
