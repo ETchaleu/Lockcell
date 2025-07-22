@@ -87,6 +87,7 @@ def nTask(delta : list, n : Union[int, List[list]], config :TaskEnv.Config, me, 
         me.sout(GrOut, None)
     if isinstance(n, list):
         n = len(n)
+        
     return nAGG.invoke(subdiv, result, n, config,  GrOut, oneSub, delegate = True)#type: ignore
 
 
@@ -361,7 +362,7 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
                 GrOut = Graph(emphas= "orange")
                 me.down(GrOut, nabla)
                 me.sout(GrOut, None)
-            
+                
             newdivision = []
             oneSub = []
             idx_ = 0
@@ -378,7 +379,6 @@ def nAnalyser(subdiv : List[list], answers : List[Tuple[List[list] | None, bool]
                     newdivision.append(temp[1])
                     idx_ += 2
             return nTask.invoke(nabla, newdivision, config, GrOut, True, False, oneSub, delegate=True)
-            
 
         Achanger = True #TODO: Activation de l'analyse ou pas à retirer
         if Achanger: 
