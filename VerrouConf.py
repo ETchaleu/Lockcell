@@ -1,5 +1,6 @@
 from Tasks import Config
 from pathlib import Path
+import copy
 
 class ConfigVerrou(Config):
     def __init__(self, nbRun=None):
@@ -7,6 +8,8 @@ class ConfigVerrou(Config):
         self.InPath = ""
         self.OutPath = ""
         self.dir = ""
+        self.all_lines = []
+        self.ready = False
     
     def setInLinePath(self, path : str):
         self.InPath = path
@@ -16,11 +19,30 @@ class ConfigVerrou(Config):
 
     def setDir(self, dir : str):
         self.dir = dir
+
+    def generateSearchSpace(self) -> list:
+        In = self.dir + "/" + self.InPath
+        if self.ready:
+            all_lines = self.all_lines
+        else: 
+            with open(In, 'r') as f:
+                all_lines = f.readlines()
+        N = len(all_lines)
+        return [i for i in range(N)]
+    
+    def PrepareForArmoniK(self):
+        In = self.dir + "/" + self.InPath
+        with open(In, 'r') as f:
+            all_lines = f.readlines()
+        self.all_lines = all_lines
+        self.ready = True
     
     def copy(self) -> "Config":
         res = ConfigVerrou(self.nbRun)
         res.InPath = self.InPath
         res.OutPath = self.OutPath
+        res.ready = self.ready
+        res.all_lines = copy.deepcopy(self.all_lines)
         return res
 
     def writeSource(self, lst : list):
@@ -32,8 +54,14 @@ class ConfigVerrou(Config):
         out = self.dir + "/" + self.OutPath
 
         # On lit l'entièreté des lignes
-        with open(In, 'r') as f:
-            all_lines = f.readlines()
+        if self.ready:
+            all_lines = self.all_lines
+        else:
+            try:
+                with open(In, 'r') as f:
+                    all_lines = f.readlines()
+            except:
+                raise RuntimeError("Configuration non prête à l'export, la lecture des lignes a échouée")
 
         # on selectionnes celles a perturber
         selected_lines = [all_lines[i] for i in lst if 0 <= i < len(all_lines)]
