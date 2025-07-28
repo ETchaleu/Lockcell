@@ -6,3 +6,5 @@ Next updates incoming :
 - Implmentation of solution for distinguishing more failing subsets
 
 - Peut-être dans le Middle Analyser direct faire le test du one Subset et corrigier sinon, on peut gagner une étape
+
+- PymoniK ne veut pas run avec mon worker
