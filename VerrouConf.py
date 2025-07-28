@@ -4,21 +4,32 @@ from pathlib import Path
 class ConfigVerrou(Config):
     def __init__(self, nbRun=None):
         super().__init__(nbRun)
+        self.InPath = ""
+        self.OutPath = ""
+        self.dir = ""
     
     def setInLinePath(self, path : str):
         self.InPath = path
     
     def setOutLinePath(self, path : str):
         self.OutPath = path
+
+    def setDir(self, dir : str):
+        self.dir = dir
     
-    def copy(self):
+    def copy(self) -> "Config":
         res = ConfigVerrou(self.nbRun)
         res.InPath = self.InPath
         res.OutPath = self.OutPath
+        return res
 
     def writeSource(self, lst : list):
-        In = "./verrou" + self.InPath
-        out = "./verrou" +  self.OutPath
+        if not self.InPath:
+            raise RuntimeError("verrou Config : Test lancé sans InPath")
+        if not self.OutPath:
+            raise RuntimeError("verrou Config : Test lancé sans OutPath")
+        In = self.dir + "/" + self.InPath
+        out = self.dir + "/" + self.OutPath
 
         # On lit l'entièreté des lignes
         with open(In, 'r') as f:
@@ -37,9 +48,9 @@ class ConfigVerrou(Config):
         import subprocess
 
         # Dossier pour stocker les résultats
-        REF_DIR = "ref"
-        PERTURBED_DIR = "pert"
-        LIGNE_FICHIER = self.OutPath  # Doit être au bon format (3 colonnes)
+        REF_DIR = self.dir + "/ref"
+        PERTURBED_DIR = self.dir + "/pert"
+        LIGNE_FICHIER = self.dir + "/" + self.OutPath  # Doit être au bon format (3 colonnes)
 
         # Définir les variables d’environnement pour le run perturbé
         env = os.environ.copy()
@@ -55,7 +66,6 @@ class ConfigVerrou(Config):
             ["./verrou/DD_RUN", PERTURBED_DIR],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            text=True,
             env=env
         )
         if pert_result.returncode != 0:
